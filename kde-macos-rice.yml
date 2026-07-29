@@ -1,12 +1,17 @@
-# kde-macos-rice.yml
 ---
 - name: Configurar KDE Plasma estilo macOS Tahoe
   hosts: localhost
   connection: local
 
   vars:
-    aur_user: "{{ ansible_env.USER }}"
-    repos_dir: "{{ ansible_env.HOME }}/repos"
+    aur_user: "{{ ansible_facts['env']['USER'] }}"
+    repos_dir: "{{ ansible_facts['env']['HOME'] }}/repos"
+
+  handlers:
+    - name: Actualizar FancyTasksNG
+      ansible.builtin.command:
+        cmd: make update
+        chdir: "{{ repos_dir }}/FancyTasksNG"
 
   tasks:
     - name: Permitir ejecuciones temporales de pacman sin contraseña
@@ -37,7 +42,6 @@
         name:
           - ulauncher
           - plasma6-applets-panel-colorizer
-          - fancy-tasks-ng-git
         state: present
         use: paru
       become: false
@@ -47,6 +51,21 @@
         path: "{{ repos_dir }}"
         state: directory
         mode: "0755"
+
+    # Instalación/Actualización de FancyTasksNG
+    - name: Clonar o actualizar FancyTasksNG
+      ansible.builtin.git:
+        repo: https://github.com/daydve/FancyTasksNG.git
+        dest: "{{ repos_dir }}/FancyTasksNG"
+        update: yes
+      register: fancytasks_repo
+      notify: Actualizar FancyTasksNG
+
+    - name: Compilar e instalar FancyTasksNG por primera vez
+      ansible.builtin.command:
+        cmd: make install
+        chdir: "{{ repos_dir }}/FancyTasksNG"
+      when: fancytasks_repo.changed and not fancytasks_repo.before
 
     # Repositorios Temáticos Base (Vinceliuice)
     - name: Clonar MacTahoe-icon-theme
@@ -124,7 +143,7 @@
     - name: Instalar tema Liquid Glass en Ulauncher
       ansible.builtin.file:
         src: "{{ repos_dir }}/ulauncher-liquid-glass"
-        dest: "{{ ansible_env.HOME }}/.config/ulauncher/user-themes/liquid-glass"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/ulauncher/user-themes/liquid-glass"
         state: link
 
     - name: Clonar TahoeLauncher
