@@ -1,29 +1,34 @@
 # kde-macos-rice.yml
 ---
-
-- name: Configurar KDE estilo macOS Tahoe
+- name: Configurar KDE Plasma estilo macOS Tahoe
   hosts: localhost
   connection: local
-  
+
   vars:
     aur_user: "{{ ansible_env.USER }}"
+    repos_dir: "{{ ansible_env.HOME }}/repos"
 
   tasks:
-    - name: Permitir que pacman corra sin contraseña
+    - name: Permitir ejecuciones temporales de pacman sin contraseña
       ansible.builtin.copy:
         dest: /etc/sudoers.d/pacman-nopasswd
         content: "{{ aur_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
-        mode: '0440'
-        validate: 'visudo -cf %s'
+        mode: "0440"
+        validate: "visudo -cf %s"
       become: true
 
-    - name: Instalar Kvantum y herramientas base (repos oficiales)
+    - name: Instalar dependencias de compilación y herramientas de KDE
       community.general.pacman:
         name:
+          - git
+          - cmake
+          - extra-cmake-modules
+          - plasma-desktop
           - kvantum
           - kvantum-qt5
           - qt5ct
           - qt6ct
+          - wayland
         state: present
       become: true
 
@@ -31,36 +36,103 @@
       kewlfft.aur.aur:
         name:
           - ulauncher
+          - plasma-panel-colorizer
+          - fancy-tasks-ng-git
         state: present
         use: paru
       become: false
 
-    - name: Clonar MacTahoe-icon-theme (oficial, vinceliuice)
+    - name: Crear directorio de repositorios
+      ansible.builtin.file:
+        path: "{{ repos_dir }}"
+        state: directory
+        mode: "0755"
+
+    # Repositorios Temáticos Base (Vinceliuice)
+    - name: Clonar MacTahoe-icon-theme
       ansible.builtin.git:
         repo: https://github.com/vinceliuice/MacTahoe-icon-theme.git
-        dest: "{{ ansible_env.HOME }}/repos/MacTahoe-icon-theme"
+        dest: "{{ repos_dir }}/MacTahoe-icon-theme"
 
-    - name: Clonar MacTahoe-gtk-theme (oficial, vinceliuice)
+    - name: Ejecutar script de instalación del tema de iconos
+      ansible.builtin.command:
+        cmd: ./install.sh -a
+        chdir: "{{ repos_dir }}/MacTahoe-icon-theme"
+
+    - name: Clonar MacTahoe-gtk-theme
       ansible.builtin.git:
         repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
-        dest: "{{ ansible_env.HOME }}/repos/MacTahoe-gtk-theme"
+        dest: "{{ repos_dir }}/MacTahoe-gtk-theme"
 
-    - name: Clonar MacTahoe-kde (oficial, vinceliuice)
+    - name: Ejecutar script de instalación del tema GTK
+      ansible.builtin.command:
+        cmd: ./install.sh
+        chdir: "{{ repos_dir }}/MacTahoe-gtk-theme"
+
+    - name: Clonar MacTahoe-kde
       ansible.builtin.git:
         repo: https://github.com/vinceliuice/MacTahoe-kde.git
-        dest: "{{ ansible_env.HOME }}/repos/MacTahoe-kde"
+        dest: "{{ repos_dir }}/MacTahoe-kde"
 
-    - name: Clonar KDE-Rounded-Corners (oficial, matinlotfali)
+    - name: Ejecutar script de instalación del tema de KDE
+      ansible.builtin.command:
+        cmd: ./install.sh
+        chdir: "{{ repos_dir }}/MacTahoe-kde"
+
+    # Efectos de Ventana y Renderizado
+    - name: Clonar KDE-Rounded-Corners
       ansible.builtin.git:
         repo: https://github.com/matinlotfali/KDE-Rounded-Corners.git
-        dest: "{{ ansible_env.HOME }}/repos/KDE-Rounded-Corners"
+        dest: "{{ repos_dir }}/KDE-Rounded-Corners"
 
-    - name: Clonar kwin-effects-better-blur-dx (oficial, xarblu)
+    - name: Compilar e instalar KDE-Rounded-Corners
+      ansible.builtin.shell:
+        cmd: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+          make
+          make install
+        chdir: "{{ repos_dir }}/KDE-Rounded-Corners"
+      become: true
+
+    - name: Clonar kwin-effects-better-blur-dx
       ansible.builtin.git:
         repo: https://github.com/xarblu/kwin-effects-better-blur-dx.git
-        dest: "{{ ansible_env.HOME }}/repos/kwin-effects-better-blur-dx"
+        dest: "{{ repos_dir }}/kwin-effects-better-blur-dx"
 
-    - name: Quitar el permiso especial del sudo para pacman
+    - name: Compilar e instalar kwin-effects-better-blur-dx
+      ansible.builtin.shell:
+        cmd: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+          make
+          make install
+        chdir: "{{ repos_dir }}/kwin-effects-better-blur-dx"
+      become: true
+
+    # Widgets & Applets
+    - name: Clonar liquidglass-kde-widgets
+      ansible.builtin.git:
+        repo: https://github.com/jaxparrow07/liquidglass-kde-widgets.git
+        dest: "{{ repos_dir }}/liquidglass-kde-widgets"
+
+    - name: Clonar ulauncher-liquid-glass
+      ansible.builtin.git:
+        repo: https://github.com/kayozxo/ulauncher-liquid-glass.git
+        dest: "{{ repos_dir }}/ulauncher-liquid-glass"
+
+    - name: Instalar tema Liquid Glass en Ulauncher
+      ansible.builtin.file:
+        src: "{{ repos_dir }}/ulauncher-liquid-glass"
+        dest: "{{ ansible_env.HOME }}/.config/ulauncher/user-themes/liquid-glass"
+        state: link
+
+    - name: Clonar TahoeLauncher
+      ansible.builtin.git:
+        repo: https://github.com/EliverLara/TahoeLauncher.git
+        dest: "{{ repos_dir }}/TahoeLauncher"
+
+    - name: Limpiar el archivo de sudoers de pacman
       ansible.builtin.file:
         path: /etc/sudoers.d/pacman-nopasswd
         state: absent
