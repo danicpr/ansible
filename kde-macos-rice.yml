@@ -36,7 +36,7 @@
       kewlfft.aur.aur:
         name:
           - ulauncher
-          - plasma-panel-colorizer
+          - plasma6-applets-panel-colorizer
           - fancy-tasks-ng-git
         state: present
         use: paru
