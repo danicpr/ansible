@@ -1,0 +1,67 @@
+# kde-macos-rice.yml
+---
+
+- name: Configurar KDE estilo macOS Tahoe
+  hosts: localhost
+  connection: local
+  
+  vars:
+    aur_user: "{{ ansible_env.USER }}"
+
+  tasks:
+    - name: Permitir que pacman corra sin contraseña
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/pacman-nopasswd
+        content: "{{ aur_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
+        mode: '0440'
+        validate: 'visudo -cf %s'
+      become: true
+
+    - name: Instalar Kvantum y herramientas base (repos oficiales)
+      community.general.pacman:
+        name:
+          - kvantum
+          - kvantum-qt5
+          - qt5ct
+          - qt6ct
+        state: present
+      become: true
+
+    - name: Instalar paquetes desde AUR
+      kewlfft.aur.aur:
+        name:
+          - ulauncher
+        state: present
+        use: paru
+      become: false
+
+    - name: Clonar MacTahoe-icon-theme (oficial, vinceliuice)
+      ansible.builtin.git:
+        repo: https://github.com/vinceliuice/MacTahoe-icon-theme.git
+        dest: "{{ ansible_env.HOME }}/repos/MacTahoe-icon-theme"
+
+    - name: Clonar MacTahoe-gtk-theme (oficial, vinceliuice)
+      ansible.builtin.git:
+        repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
+        dest: "{{ ansible_env.HOME }}/repos/MacTahoe-gtk-theme"
+
+    - name: Clonar MacTahoe-kde (oficial, vinceliuice)
+      ansible.builtin.git:
+        repo: https://github.com/vinceliuice/MacTahoe-kde.git
+        dest: "{{ ansible_env.HOME }}/repos/MacTahoe-kde"
+
+    - name: Clonar KDE-Rounded-Corners (oficial, matinlotfali)
+      ansible.builtin.git:
+        repo: https://github.com/matinlotfali/KDE-Rounded-Corners.git
+        dest: "{{ ansible_env.HOME }}/repos/KDE-Rounded-Corners"
+
+    - name: Clonar kwin-effects-better-blur-dx (oficial, xarblu)
+      ansible.builtin.git:
+        repo: https://github.com/xarblu/kwin-effects-better-blur-dx.git
+        dest: "{{ ansible_env.HOME }}/repos/kwin-effects-better-blur-dx"
+
+    - name: Quitar el permiso especial del sudo para pacman
+      ansible.builtin.file:
+        path: /etc/sudoers.d/pacman-nopasswd
+        state: absent
+      become: true
