@@ -141,11 +141,18 @@
         repo: https://github.com/kayozxo/ulauncher-liquid-glass.git
         dest: "{{ repos_dir }}/ulauncher-liquid-glass"
 
+    - name: Crear directorio de temas de Ulauncher
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/ulauncher/user-themes"
+        state: directory
+        mode: "0755"
+
     - name: Instalar tema Liquid Glass en Ulauncher
       ansible.builtin.file:
         src: "{{ repos_dir }}/ulauncher-liquid-glass"
         dest: "{{ ansible_facts['env']['HOME'] }}/.config/ulauncher/user-themes/liquid-glass"
         state: link
+        force: true
 
     - name: Clonar TahoeLauncher
       ansible.builtin.git:
