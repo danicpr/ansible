@@ -75,7 +75,7 @@
 
     - name: Ejecutar script de instalación del tema de iconos
       ansible.builtin.command:
-        cmd: ./install.sh -a
+        cmd: ./install.sh -b
         chdir: "{{ repos_dir }}/MacTahoe-icon-theme"
 
     - name: Clonar MacTahoe-gtk-theme
@@ -85,7 +85,7 @@
 
     - name: Ejecutar script de instalación del tema GTK
       ansible.builtin.command:
-        cmd: ./install.sh
+        cmd: ./install.sh -b
         chdir: "{{ repos_dir }}/MacTahoe-gtk-theme"
 
     - name: Clonar MacTahoe-kde
