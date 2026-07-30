@@ -49,7 +49,7 @@
 
 - name: Instalar iconos
   become: false
-  command: ./install.sh -c dark -b
+  command: ./install.sh -b
   args:
     chdir: /tmp/MacTahoe-icon-theme
   when: not icons_installed.stat.exists
