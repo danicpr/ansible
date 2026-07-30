@@ -16,6 +16,9 @@ pacman_packages:
   - neovim
   - fzf
   - zoxide
+  - ripgrep
+  - unrar
+  - unzip
 
   # Editor
   - zed
@@ -25,11 +28,16 @@ pacman_packages:
   - bun
   - ttf-jetbrains-mono-nerd
 
-  # Normal
+  # Aplicaciones
   - zen-browser-bin
-
-  # Dependencias del tema MacTahoe
+  - onlyoffice-bin
+  - gimp
+  - qbittorrent
+  - celluloid
+  - vesktop
+  # Tema MacTahoe
   - extension-manager
+  - mission-center
   - flatpak
 
 aur_packages:
