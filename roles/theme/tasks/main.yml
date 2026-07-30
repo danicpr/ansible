@@ -20,18 +20,26 @@
     chdir: /tmp/MacTahoe-gtk-theme
   when: not theme_installed.stat.exists
 
+- name: Clonar MacTahoe-icon-theme (iconos + cursores)
+  become: false
+  git:
+    repo: https://github.com/vinceliuice/MacTahoe-icon-theme.git
+    dest: /tmp/MacTahoe-icon-theme
+    depth: 1
+  when: not theme_installed.stat.exists
+
 - name: Instalar iconos
   become: false
   command: ./install.sh -b -l
   args:
-    chdir: /tmp/MacTahoe-gtk-theme
+    chdir: /tmp/MacTahoe-icon-theme
   when: not theme_installed.stat.exists
 
 - name: Instalar cursores
   become: false
   command: ./install.sh
   args:
-    chdir: /tmp/MacTahoe-gtk-theme/cursors
+    chdir: /tmp/MacTahoe-icon-theme/cursors
   when: not theme_installed.stat.exists
 
 - name: Aplicar tweak de GNOME Shell theme (dark)

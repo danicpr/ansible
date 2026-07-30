@@ -15,7 +15,7 @@
   become: false
   command: cargo install fnm
   environment:
-    PATH: "{{ lookup('env', 'HOME') }}/.cargo/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ lookup('env', 'HOME') }}/.cargo/bin:{{ lookup('env', 'PATH') }}"
   args:
     creates: "{{ lookup('env', 'HOME') }}/.cargo/bin/fnm"
 
