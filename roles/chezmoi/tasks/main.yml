@@ -8,7 +8,7 @@
 - name: Init y apply de dotfiles
   command: >
     ~/.local/bin/chezmoi init --apply
-    https://github.com/tu-usuario/dotfiles.git
+    https://codeberg.org/danicpr/dotfiles.git
   become: false
   environment:
     BW_SESSION: "{{ bw_session }}"
