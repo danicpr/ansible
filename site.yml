@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  become: true
+  vars_prompt:
+    - name: bw_password
+      prompt: "Clave maestra de Bitwarden"
+      private: true
+
+  tasks:
+    - name: Desbloquear vault y obtener sesión
+      command: bw unlock --passwordenv BW_PASSWORD --raw
+      environment:
+        BW_PASSWORD: "{{ bw_password }}"
+      register: bw_unlock
+      no_log: true
+      become: false
+
+    - name: Guardar BW_SESSION como fact
+      set_fact:
+        bw_session: "{{ bw_unlock.stdout }}"
+      no_log: true
+
+    - name: Sincronizar vault
+      command: bw sync
+      become: false
+      environment:
+        BW_SESSION: "{{ bw_session }}"
+
+    - name: Instalar chezmoi
+      shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
+      args:
+        creates: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
+      become: false
+
+    - name: Init y apply de dotfiles (con sesión de bw activa)
+      command: >
+        ~/.local/bin/chezmoi init --apply
+        https://github.com/tu-usuario/dotfiles.git
+      become: false
+      environment:
+        BW_SESSION: "{{ bw_session }}"
