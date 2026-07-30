@@ -1,0 +1,70 @@
+---
+- name: Instalar gnome-extensions-cli
+  pip:
+    name: gnome-extensions-cli
+    extra_args: --user --break-system-packages
+  become: false
+
+- name: Instalar extensiones de GNOME Shell (vía gext)
+  command: >
+    ~/.local/bin/gext install
+    appindicatorsupport@rgcjonas.gmail.com
+    blur-my-shell@aunetx
+    user-theme@gnome-shell-extensions.gcampax.github.com
+    dash-to-dock@micxgx.gmail.com
+    copyous@boerdereinar.dev
+    logomenu@aryan_k
+    CoverflowAltTab@palatis.blogspot.com
+    caffeine@patapon.info
+    emoji-copy@felipeftn
+    color-picker@tuberry
+    pip-on-top@rafostar.github.com
+    burn-my-windows@schneegans.github.com
+    just-perfection-desktop@just-perfection
+    globalmenu@ShiroOSL.github.io
+  become: false
+
+# --- SearchlightNG: instalación manual, aún no está en extensions.gnome.org ---
+
+- name: Verificar si SearchlightNG ya está instalada
+  stat:
+    path: "{{ ansible_env.HOME }}/.local/share/gnome-shell/extensions/search-light-ng@salix.host"
+  register: searchlight_installed
+  become: false
+
+- name: Clonar repo de SearchlightNG
+  become: false
+  git:
+    repo: https://git.salix.host/salix/searchlightng.git
+    dest: /tmp/searchlightng
+    depth: 1
+  when: not searchlight_installed.stat.exists
+
+- name: Compilar e instalar SearchlightNG
+  become: false
+  command: make build install
+  args:
+    chdir: /tmp/searchlightng
+  when: not searchlight_installed.stat.exists
+
+# --- Habilitar todas juntas al final ---
+
+- name: Habilitar todas las extensiones
+  command: >
+    ~/.local/bin/gext enable
+    appindicatorsupport@rgcjonas.gmail.com
+    blur-my-shell@aunetx
+    user-theme@gnome-shell-extensions.gcampax.github.com
+    dash-to-dock@micxgx.gmail.com
+    copyous@boerdereinar.dev
+    logomenu@aryan_k
+    CoverflowAltTab@palatis.blogspot.com
+    caffeine@patapon.info
+    emoji-copy@felipeftn
+    color-picker@tuberry
+    pip-on-top@rafostar.github.com
+    burn-my-windows@schneegans.github.com
+    search-light-ng@salix.host
+    just-perfection-desktop@just-perfection
+    globalmenu@ShiroOSL.github.io
+  become: false

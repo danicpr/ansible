@@ -1,0 +1,34 @@
+---
+pacman_packages:
+  # Base del sistema
+  - base-devel
+  - git
+  - curl
+  - zsh
+  - zip
+  - paru
+
+  # Terminal y shell
+  - ghostty
+  - starship
+  - fastfetch
+  - neovim
+
+  # Editor
+  - zed
+
+  # Desarrollo
+  - rustup
+  - bun
+  - jetbrains-mono-nerd
+
+  # Normal
+  - zen-browser-bin
+
+  # Dependencias del tema MacTahoe
+  - sassc
+  - gtk-engine-murrine
+  - flatpak
+
+aur_packages:
+  - gnome-rounded-blur

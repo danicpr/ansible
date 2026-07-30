@@ -7,7 +7,7 @@
       private: true
 
   tasks:
-    - name: Desbloquear vault y obtener sesión
+    - name: Desbloquear vault y obtener sesión de Bitwarden
       command: bw unlock --passwordenv BW_PASSWORD --raw
       environment:
         BW_PASSWORD: "{{ bw_password }}"
@@ -26,16 +26,10 @@
       environment:
         BW_SESSION: "{{ bw_session }}"
 
-    - name: Instalar chezmoi
-      shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
-      args:
-        creates: "$HOME/.local/bin/chezmoi"
-      become: false
-
-    - name: Init y apply de dotfiles (con sesión de bw activa)
-      command: >
-        ~/.local/bin/chezmoi init --apply
-        https://codeberg.org/danicpr/dotfiles.git
-      become: false
-      environment:
-        BW_SESSION: "{{ bw_session }}"
+  roles:
+    - packages
+    - dev_tools
+    - fonts
+    - theme
+    - extensions
+    - chezmoi

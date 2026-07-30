@@ -1,0 +1,63 @@
+---
+- name: Verificar si las fuentes SF ya están instaladas
+  stat:
+    path: /usr/local/share/fonts/otf/sf-pro
+  register: sf_fonts_installed
+
+- name: Clonar repo de San Francisco fonts (sparse checkout)
+  become: false
+  when: not sf_fonts_installed.stat.exists
+  block:
+    - name: Clonar repo (sin checkout completo)
+      command: >
+        git clone -n --depth=1 --filter=tree:0
+        https://github.com/thelioncape/San-Francisco-family.git
+        /tmp/San-Francisco-family
+      args:
+        creates: /tmp/San-Francisco-family
+
+    - name: Sparse checkout solo de las fuentes necesarias
+      command: git sparse-checkout set --no-cone "SF Pro" "SF Serif" "SF Mono"
+      args:
+        chdir: /tmp/San-Francisco-family
+
+    - name: Checkout final
+      command: git checkout
+      args:
+        chdir: /tmp/San-Francisco-family
+
+- name: Crear carpetas de destino
+  file:
+    path: "/usr/local/share/fonts/otf/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - sf-pro
+    - sf-serif
+    - sf-mono
+  when: not sf_fonts_installed.stat.exists
+
+- name: Copiar SF Pro
+  copy:
+    src: "/tmp/San-Francisco-family/SF Pro/"
+    dest: /usr/local/share/fonts/otf/sf-pro/
+    remote_src: true
+  when: not sf_fonts_installed.stat.exists
+
+- name: Copiar SF Serif
+  copy:
+    src: "/tmp/San-Francisco-family/SF Serif/"
+    dest: /usr/local/share/fonts/otf/sf-serif/
+    remote_src: true
+  when: not sf_fonts_installed.stat.exists
+
+- name: Copiar SF Mono
+  copy:
+    src: "/tmp/San-Francisco-family/SF Mono/"
+    dest: /usr/local/share/fonts/otf/sf-mono/
+    remote_src: true
+  when: not sf_fonts_installed.stat.exists
+
+- name: Actualizar cache de fuentes
+  command: fc-cache -f
+  when: not sf_fonts_installed.stat.exists

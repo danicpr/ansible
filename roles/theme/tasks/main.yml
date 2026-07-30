@@ -1,0 +1,67 @@
+---
+- name: Verificar si el tema ya está instalado
+  stat:
+    path: "{{ ansible_env.HOME }}/.themes/MacTahoe-Dark"
+  register: theme_installed
+  become: false
+
+- name: Instalar dependencias necesarias
+  pacman:
+    name:
+      - sassc
+      - gtk-engine-murrine
+      - flatpak
+    state: present
+
+- name: Clonar MacTahoe-gtk-theme
+  become: false
+  git:
+    repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
+    dest: /tmp/MacTahoe-gtk-theme
+    depth: 1
+  when: not theme_installed.stat.exists
+
+- name: Instalar tema GTK (dark, con bordes)
+  become: false
+  command: ./install.sh -c dark -b
+  args:
+    chdir: /tmp/MacTahoe-gtk-theme
+  when: not theme_installed.stat.exists
+
+- name: Instalar iconos
+  become: false
+  command: ./install.sh -b -l
+  args:
+    chdir: /tmp/MacTahoe-gtk-theme
+  when: not theme_installed.stat.exists
+
+- name: Instalar cursores
+  become: false
+  command: ./install.sh
+  args:
+    chdir: /tmp/MacTahoe-gtk-theme/cursors
+  when: not theme_installed.stat.exists
+
+- name: Aplicar tweak de GNOME Shell theme (dark)
+  become: true
+  command: ./tweaks.sh -g -c dark
+  args:
+    chdir: /tmp/MacTahoe-gtk-theme
+  when: not theme_installed.stat.exists
+
+- name: Permitir tema GTK en apps Flatpak (GTK3)
+  become: true
+  command: flatpak override --filesystem=xdg-config/gtk-3.0
+  when: not theme_installed.stat.exists
+
+- name: Permitir tema GTK en apps Flatpak (GTK4)
+  become: true
+  command: flatpak override --filesystem=xdg-config/gtk-4.0
+  when: not theme_installed.stat.exists
+
+- name: Aplicar tweak de Flatpak (dark)
+  become: false
+  command: ./tweaks.sh -F -c dark
+  args:
+    chdir: /tmp/MacTahoe-gtk-theme
+  when: not theme_installed.stat.exists

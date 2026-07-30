@@ -1,0 +1,14 @@
+---
+- name: Instalar chezmoi
+  shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
+  args:
+    creates: "$HOME/.local/bin/chezmoi"
+  become: false
+
+- name: Init y apply de dotfiles
+  command: >
+    ~/.local/bin/chezmoi init --apply
+    https://github.com/tu-usuario/dotfiles.git
+  become: false
+  environment:
+    BW_SESSION: "{{ bw_session }}"

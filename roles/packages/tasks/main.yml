@@ -1,0 +1,14 @@
+---
+- name: Actualizar base de datos de pacman
+  pacman:
+    update_cache: true
+
+- name: Instalar paquetes de repos oficiales
+  pacman:
+    name: "{{ pacman_packages }}"
+    state: present
+
+- name: Instalar paquetes de AUR
+  become: false
+  command: paru -S --noconfirm --needed {{ item }}
+  loop: "{{ aur_packages }}"
