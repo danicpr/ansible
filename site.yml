@@ -6,7 +6,7 @@
       prompt: "Clave maestra de Bitwarden"
       private: true
 
-  tasks:
+  pre_tasks:
     - name: Desbloquear vault y obtener sesión de Bitwarden
       command: bw unlock --passwordenv BW_PASSWORD --raw
       environment:
