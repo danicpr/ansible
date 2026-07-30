@@ -5,6 +5,12 @@
   register: theme_installed
   become: false
 
+- name: Verificar si el tema libadwaita ya está instalado
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.config/gtk-4.0/gtk.css"
+  register: libadwaita_installed
+  become: false
+
 - name: Verificar si los iconos ya están instalados
   stat:
     path: "{{ lookup('env', 'HOME') }}/.icons/MacTahoe-Dark"
@@ -23,7 +29,7 @@
     repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
     dest: /tmp/MacTahoe-gtk-theme
     depth: 1
-  when: not theme_installed.stat.exists
+  when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
 
 - name: Instalar tema GTK (dark, con bordes)
   become: false
@@ -37,7 +43,7 @@
   command: ./install.sh -l -b -c dark
   args:
     chdir: /tmp/MacTahoe-gtk-theme
-  when: not theme_installed.stat.exists
+  when: not libadwaita_installed.stat.exists
 
 - name: Clonar MacTahoe-icon-theme (iconos + cursores)
   become: false
@@ -49,7 +55,7 @@
 
 - name: Instalar iconos
   become: false
-  command: ./install.sh -b
+  command: ./install.sh -c dark -b
   args:
     chdir: /tmp/MacTahoe-icon-theme
   when: not icons_installed.stat.exists
