@@ -28,7 +28,7 @@
 
 - name: Verificar si SearchlightNG ya está instalada
   stat:
-    path: "{{ ansible_env.HOME }}/.local/share/gnome-shell/extensions/search-light-ng@salix.host"
+    path: "{{ lookup('env', 'HOME') }}/.local/share/gnome-shell/extensions/search-light-ng@salix.host"
   register: searchlight_installed
   become: false
 

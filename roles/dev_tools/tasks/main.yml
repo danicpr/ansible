@@ -3,24 +3,24 @@
   become: false
   command: rustup default stable
   args:
-    creates: "{{ ansible_env.HOME }}/.rustup/toolchains"
+    creates: "{{ lookup('env', 'HOME') }}/.rustup/toolchains"
 
 - name: Instalar oh-my-pi (pi-coding-agent) vía Bun
   become: false
   command: bun install -g @oh-my-pi/pi-coding-agent
   args:
-    creates: "{{ ansible_env.HOME }}/.bun/install/global/node_modules/@oh-my-pi"
+    creates: "{{ lookup('env', 'HOME') }}/.bun/install/global/node_modules/@oh-my-pi"
 
 - name: Instalar fnm vía Cargo
   become: false
   command: cargo install fnm
   environment:
-    PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ lookup('env', 'HOME') }}/.cargo/bin:{{ ansible_env.PATH }}"
   args:
-    creates: "{{ ansible_env.HOME }}/.cargo/bin/fnm"
+    creates: "{{ lookup('env', 'HOME') }}/.cargo/bin/fnm"
 
 - name: Instalar SDKMAN
   become: false
   shell: curl -s "https://get.sdkman.io?rcupdate=false" | zsh
   args:
-    creates: "{{ ansible_env.HOME }}/.sdkman/bin/sdkman-init.sh"
+    creates: "{{ lookup('env', 'HOME') }}/.sdkman/bin/sdkman-init.sh"

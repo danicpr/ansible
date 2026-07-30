@@ -1,7 +1,7 @@
 ---
 - name: Verificar si el tema ya está instalado
   stat:
-    path: "{{ ansible_env.HOME }}/.themes/MacTahoe-Dark"
+    path: "{{ lookup('env', 'HOME') }}/.themes/MacTahoe-Dark"
   register: theme_installed
   become: false
 
