@@ -1,8 +1,20 @@
 ---
-- name: Verificar si el tema ya está instalado
+- name: Verificar si el tema GTK ya está instalado
   stat:
     path: "{{ lookup('env', 'HOME') }}/.themes/MacTahoe-Dark"
   register: theme_installed
+  become: false
+
+- name: Verificar si los iconos ya están instalados
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.icons/MacTahoe-Dark"
+  register: icons_installed
+  become: false
+
+- name: Verificar si el cursor ya está instalado
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.icons/MacTahoe-cursors"
+  register: cursor_installed
   become: false
 
 - name: Clonar MacTahoe-gtk-theme
@@ -20,7 +32,7 @@
     chdir: /tmp/MacTahoe-gtk-theme
   when: not theme_installed.stat.exists
 
-- name: Instalar tema GTK libadwaita(dark, con bordes)
+- name: Instalar tema GTK libadwaita (dark, con bordes)
   become: false
   command: ./install.sh -l -b -c dark
   args:
@@ -33,21 +45,21 @@
     repo: https://github.com/vinceliuice/MacTahoe-icon-theme.git
     dest: /tmp/MacTahoe-icon-theme
     depth: 1
-  when: not theme_installed.stat.exists
+  when: not icons_installed.stat.exists or not cursor_installed.stat.exists
 
 - name: Instalar iconos
   become: false
   command: ./install.sh -c dark -b
   args:
     chdir: /tmp/MacTahoe-icon-theme
-  when: not theme_installed.stat.exists
+  when: not icons_installed.stat.exists
 
 - name: Instalar cursores
   become: false
   command: ./install.sh
   args:
     chdir: /tmp/MacTahoe-icon-theme/cursors
-  when: not theme_installed.stat.exists
+  when: not cursor_installed.stat.exists
 
 - name: Aplicar tweak de GDM theme (dark)
   become: true
