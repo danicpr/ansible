@@ -11,23 +11,16 @@
   args:
     creates: "{{ lookup('env', 'HOME') }}/.local/bin/gext"
 
+- name: Obtener lista de extensiones instaladas
+  command: gnome-extensions list
+  register: gnome_extensions_installed
+  changed_when: false
+  become: false
+
 - name: Instalar extensiones de GNOME Shell (vía gext)
-  command: >
-    ~/.local/bin/gext install
-    appindicatorsupport@rgcjonas.gmail.com
-    blur-my-shell@aunetx
-    user-theme@gnome-shell-extensions.gcampax.github.com
-    dash-to-dock@micxgx.gmail.com
-    copyous@boerdereinar.dev
-    logomenu@aryan_k
-    CoverflowAltTab@palatis.blogspot.com
-    caffeine@patapon.info
-    emoji-copy@felipeftn
-    color-picker@tuberry
-    pip-on-top@rafostar.github.com
-    burn-my-windows@schneegans.github.com
-    just-perfection-desktop@just-perfection
-    globalmenu@ShiroOSL.github.io
+  command: "~/.local/bin/gext install {{ item }}"
+  loop: "{{ gnome_extensions }}"
+  when: item not in gnome_extensions_installed.stdout_lines
   become: false
 
 # --- SearchlightNG: instalación manual, aún no está en extensions.gnome.org ---
@@ -55,22 +48,14 @@
 
 # --- Habilitar todas juntas al final ---
 
+- name: Obtener lista de extensiones habilitadas
+  command: gnome-extensions list --enabled
+  register: gnome_extensions_enabled
+  changed_when: false
+  become: false
+
 - name: Habilitar todas las extensiones
-  command: >
-    ~/.local/bin/gext enable
-    appindicatorsupport@rgcjonas.gmail.com
-    blur-my-shell@aunetx
-    user-theme@gnome-shell-extensions.gcampax.github.com
-    dash-to-dock@micxgx.gmail.com
-    copyous@boerdereinar.dev
-    logomenu@aryan_k
-    CoverflowAltTab@palatis.blogspot.com
-    caffeine@patapon.info
-    emoji-copy@felipeftn
-    color-picker@tuberry
-    pip-on-top@rafostar.github.com
-    burn-my-windows@schneegans.github.com
-    search-light-ng@salix.host
-    just-perfection-desktop@just-perfection
-    globalmenu@ShiroOSL.github.io
+  command: "~/.local/bin/gext enable {{ item }}"
+  loop: "{{ gnome_extensions + ['search-light-ng@salix.host'] }}"
+  when: item not in gnome_extensions_enabled.stdout_lines
   become: false

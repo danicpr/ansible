@@ -10,5 +10,4 @@
 
 - name: Instalar paquetes de AUR
   become: false
-  command: paru -S --noconfirm --needed {{ item }}
-  loop: "{{ aur_packages }}"
+  command: paru -S --noconfirm --needed {{ aur_packages | join(' ') }}
