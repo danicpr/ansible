@@ -20,6 +20,13 @@
     chdir: /tmp/MacTahoe-gtk-theme
   when: not theme_installed.stat.exists
 
+- name: Instalar tema GTK libadwaita(dark, con bordes)
+  become: false
+  command: ./install.sh -l -b -c dark
+  args:
+    chdir: /tmp/MacTahoe-gtk-theme
+  when: not theme_installed.stat.exists
+
 - name: Clonar MacTahoe-icon-theme (iconos + cursores)
   become: false
   git:
@@ -30,7 +37,7 @@
 
 - name: Instalar iconos
   become: false
-  command: ./install.sh -b -l
+  command: ./install.sh -c dark -b
   args:
     chdir: /tmp/MacTahoe-icon-theme
   when: not theme_installed.stat.exists
@@ -42,9 +49,9 @@
     chdir: /tmp/MacTahoe-icon-theme/cursors
   when: not theme_installed.stat.exists
 
-- name: Aplicar tweak de GNOME Shell theme (dark)
+- name: Aplicar tweak de GDM theme (dark)
   become: true
-  command: ./tweaks.sh -g -c dark
+  command: ./tweaks.sh -g -c Dark
   args:
     chdir: /tmp/MacTahoe-gtk-theme
   when: not theme_installed.stat.exists
