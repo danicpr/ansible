@@ -39,6 +39,7 @@
     - fonts
     - theme
     - extensions
+    - zen
     - chezmoi
   post_tasks:
     - name: Remover permiso NOPASSWD de pacman (limpieza)

@@ -1,0 +1,7 @@
+---
+- name: Forzar creación de perfil de Zen Browser (headless)
+  become: false
+  command: timeout 10 zen-browser --headless --first-startup
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.zen/profiles.ini"
+  ignore_errors: true
