@@ -29,7 +29,7 @@
     - name: Instalar chezmoi
       shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
       args:
-        creates: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
+        creates: "$HOME/.local/bin/chezmoi"
       become: false
 
     - name: Init y apply de dotfiles (con sesión de bw activa)
