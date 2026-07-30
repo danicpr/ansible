@@ -14,6 +14,8 @@ pacman_packages:
   - starship
   - fastfetch
   - neovim
+  - fzf
+  - zoxide
 
   # Editor
   - zed
@@ -27,7 +29,15 @@ pacman_packages:
   - zen-browser-bin
 
   # Dependencias del tema MacTahoe
+  - extension-manager
   - flatpak
 
 aur_packages:
   - gnome-rounded-blur
+
+flatpak_packages:
+  - com.github.tchx84.Flatseal
+  - com.stremio.Stremio
+  - io.github.flattool.Warehouse
+  - it.mijorus.gearlever
+  - org.vinegarhq.Sober

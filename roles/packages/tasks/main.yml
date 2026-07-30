@@ -11,3 +11,19 @@
 - name: Instalar paquetes de AUR
   become: false
   command: paru -S --noconfirm --needed {{ aur_packages | join(' ') }}
+
+- name: Añadir repositorio Flathub
+  community.general.flatpak_remote:
+    name: flathub
+    state: present
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    method: system
+  when: flatpak_packages is defined and flatpak_packages | length > 0
+
+- name: Instalar paquetes Flatpak
+  community.general.flatpak:
+    name: "{{ flatpak_packages }}"
+    state: present
+    remote: flathub
+    method: system
+  when: flatpak_packages is defined and flatpak_packages | length > 0
