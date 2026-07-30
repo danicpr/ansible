@@ -1,9 +1,15 @@
 ---
-- name: Instalar gnome-extensions-cli
-  pip:
-    name: gnome-extensions-cli
-    extra_args: --user --break-system-packages
+- name: Asegurar que el PATH de pipx esté configurado
   become: false
+  command: pipx ensurepath
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.local/bin/pipx"
+
+- name: Instalar gnome-extensions-cli vía pipx
+  become: false
+  command: pipx install gnome-extensions-cli
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.local/bin/gext"
 
 - name: Instalar extensiones de GNOME Shell (vía gext)
   command: >
