@@ -3,5 +3,5 @@
   become: false
   command: timeout 10 zen-browser --headless --first-startup
   args:
-    creates: "{{ lookup('env', 'HOME') }}/.zen/profiles.ini"
+    creates: "{{ lookup('env', 'HOME') }}/.config/zen/profiles.ini"
   ignore_errors: true
