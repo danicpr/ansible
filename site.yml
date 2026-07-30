@@ -29,7 +29,7 @@
       become: true
       copy:
         dest: /etc/sudoers.d/pacman-nopasswd
-        content: "{{ ansible_user_id }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
+        content: "{{ lookup('env', 'USER') }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
         mode: "0440"
         validate: "visudo -cf %s"
 
