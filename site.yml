@@ -25,6 +25,13 @@
       become: false
       environment:
         BW_SESSION: "{{ bw_session }}"
+    - name: Permitir sudo sin contraseña para pacman (necesario para AUR/paru)
+      become: true
+      copy:
+        dest: /etc/sudoers.d/pacman-nopasswd
+        content: "{{ ansible_user_id }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
+        mode: "0440"
+        validate: "visudo -cf %s"
 
   roles:
     - packages
@@ -33,3 +40,9 @@
     - theme
     - extensions
     - chezmoi
+  post_tasks:
+    - name: Remover permiso NOPASSWD de pacman (limpieza)
+      become: true
+      file:
+        path: /etc/sudoers.d/pacman-nopasswd
+        state: absent

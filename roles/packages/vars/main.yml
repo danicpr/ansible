@@ -20,14 +20,12 @@ pacman_packages:
   # Desarrollo
   - rustup
   - bun
-  - jetbrains-mono-nerd
+  - ttf-jetbrains-mono-nerd
 
   # Normal
   - zen-browser-bin
 
   # Dependencias del tema MacTahoe
-  - sassc
-  - gtk-engine-murrine
   - flatpak
 
 aur_packages:
