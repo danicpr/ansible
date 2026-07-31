@@ -1,14 +1,45 @@
 ---
 - name: Instalar chezmoi
-  shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
+  shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "{{ desktop_home }}/.local/bin"
   args:
-    creates: "$HOME/.local/bin/chezmoi"
+    creates: "{{ desktop_home }}/.local/bin/chezmoi"
   become: false
 
-- name: Init y apply de dotfiles
-  command: >
-    ~/.local/bin/chezmoi init --apply
-    https://codeberg.org/danicpr/dotfiles.git
+- name: Comprobar si existe el source repo de chezmoi
+  stat:
+    path: "{{ desktop_home }}/.local/share/chezmoi/.git"
+  register: chezmoi_source_repo
+  become: false
+
+- name: Inicializar y aplicar source nuevo de chezmoi
+  command: "{{ desktop_home }}/.local/bin/chezmoi init --apply https://codeberg.org/danicpr/dotfiles.git"
   become: false
   environment:
+    HOME: "{{ desktop_home }}"
     BW_SESSION: "{{ bw_session }}"
+  no_log: true
+  when: not chezmoi_source_repo.stat.exists
+
+- name: Verificar remote del source repo existente
+  command:
+    argv:
+      - git
+      - -C
+      - "{{ desktop_home }}/.local/share/chezmoi"
+      - remote
+      - get-url
+      - origin
+  register: chezmoi_remote
+  become: false
+  changed_when: false
+  failed_when: chezmoi_remote.rc != 0 or chezmoi_remote.stdout | trim != 'https://codeberg.org/danicpr/dotfiles.git'
+  when: chezmoi_source_repo.stat.exists
+
+- name: Aplicar source existente de chezmoi
+  command: "{{ desktop_home }}/.local/bin/chezmoi apply"
+  become: false
+  environment:
+    HOME: "{{ desktop_home }}"
+    BW_SESSION: "{{ bw_session }}"
+  no_log: true
+  when: chezmoi_source_repo.stat.exists

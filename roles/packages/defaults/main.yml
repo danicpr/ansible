@@ -8,6 +8,7 @@ pacman_packages:
   - zip
   - paru
   - python-pipx
+  - rsync
 
   # Terminal y shell
   - ghostty

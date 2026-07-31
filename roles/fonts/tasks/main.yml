@@ -1,12 +1,22 @@
 ---
-- name: Verificar si las fuentes SF ya están instaladas
+- name: Verificar si SF Pro ya está instalada
   stat:
     path: /usr/local/share/fonts/otf/sf-pro
-  register: sf_fonts_installed
+  register: sf_pro_fonts_installed
+
+- name: Verificar si SF Serif ya está instalada
+  stat:
+    path: /usr/local/share/fonts/otf/sf-serif
+  register: sf_serif_fonts_installed
+
+- name: Verificar si SF Mono ya está instalada
+  stat:
+    path: /usr/local/share/fonts/otf/sf-mono
+  register: sf_mono_fonts_installed
 
 - name: Clonar repo de San Francisco fonts (sparse checkout)
   become: false
-  when: not sf_fonts_installed.stat.exists
+  when: not sf_pro_fonts_installed.stat.exists or not sf_serif_fonts_installed.stat.exists or not sf_mono_fonts_installed.stat.exists
   block:
     - name: Clonar repo (sin checkout completo)
       command: >
@@ -35,29 +45,29 @@
     - sf-pro
     - sf-serif
     - sf-mono
-  when: not sf_fonts_installed.stat.exists
+  when: not sf_pro_fonts_installed.stat.exists or not sf_serif_fonts_installed.stat.exists or not sf_mono_fonts_installed.stat.exists
 
 - name: Copiar SF Pro
   copy:
     src: "/tmp/San-Francisco-family/SF Pro/"
     dest: /usr/local/share/fonts/otf/sf-pro/
     remote_src: true
-  when: not sf_fonts_installed.stat.exists
+  when: not sf_pro_fonts_installed.stat.exists or not sf_serif_fonts_installed.stat.exists or not sf_mono_fonts_installed.stat.exists
 
 - name: Copiar SF Serif
   copy:
     src: "/tmp/San-Francisco-family/SF Serif/"
     dest: /usr/local/share/fonts/otf/sf-serif/
     remote_src: true
-  when: not sf_fonts_installed.stat.exists
+  when: not sf_pro_fonts_installed.stat.exists or not sf_serif_fonts_installed.stat.exists or not sf_mono_fonts_installed.stat.exists
 
 - name: Copiar SF Mono
   copy:
     src: "/tmp/San-Francisco-family/SF Mono/"
     dest: /usr/local/share/fonts/otf/sf-mono/
     remote_src: true
-  when: not sf_fonts_installed.stat.exists
+  when: not sf_pro_fonts_installed.stat.exists or not sf_serif_fonts_installed.stat.exists or not sf_mono_fonts_installed.stat.exists
 
 - name: Actualizar cache de fuentes
   command: fc-cache -f
-  when: not sf_fonts_installed.stat.exists
+  when: not sf_pro_fonts_installed.stat.exists or not sf_serif_fonts_installed.stat.exists or not sf_mono_fonts_installed.stat.exists

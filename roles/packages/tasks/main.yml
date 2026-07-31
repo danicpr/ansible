@@ -11,6 +11,9 @@
 - name: Instalar paquetes de AUR
   become: false
   command: paru -S --noconfirm --needed {{ aur_packages | join(' ') }}
+  register: aur_install
+  changed_when: "'there is nothing to do' not in ((aur_install.stdout ~ aur_install.stderr) | lower)"
+  when: aur_packages | length > 0
 
 - name: Añadir repositorio Flathub
   community.general.flatpak_remote:

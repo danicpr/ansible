@@ -1,24 +1,18 @@
 ---
-- name: Asegurar que el PATH de pipx esté configurado
-  become: false
-  command: pipx ensurepath
-  args:
-    creates: "{{ lookup('env', 'HOME') }}/.local/bin/pipx"
-
 - name: Instalar gnome-extensions-cli vía pipx
   become: false
   command: pipx install gnome-extensions-cli
   args:
-    creates: "{{ lookup('env', 'HOME') }}/.local/bin/gext"
+    creates: "{{ desktop_home }}/.local/bin/gext"
 
-- name: Obtener lista de extensiones instaladas
+- name: Comprobar sesión D-Bus y extensiones instaladas
   command: gnome-extensions list
   register: gnome_extensions_installed
   changed_when: false
   become: false
 
 - name: Instalar extensiones de GNOME Shell (vía gext)
-  command: "~/.local/bin/gext install {{ item }}"
+  command: "{{ desktop_home }}/.local/bin/gext install {{ item }}"
   loop: "{{ gnome_extensions }}"
   when: item not in gnome_extensions_installed.stdout_lines
   become: false
@@ -27,7 +21,7 @@
 
 - name: Verificar si SearchlightNG ya está instalada
   stat:
-    path: "{{ lookup('env', 'HOME') }}/.local/share/gnome-shell/extensions/search-light-ng@salix.host"
+    path: "{{ desktop_home }}/.local/share/gnome-shell/extensions/search-light-ng@salix.host"
   register: searchlight_installed
   become: false
 
@@ -55,7 +49,7 @@
   become: false
 
 - name: Habilitar todas las extensiones
-  command: "~/.local/bin/gext enable {{ item }}"
+  command: "{{ desktop_home }}/.local/bin/gext enable {{ item }}"
   loop: "{{ gnome_extensions + ['search-light-ng@salix.host'] }}"
   when: item not in gnome_extensions_enabled.stdout_lines
   become: false

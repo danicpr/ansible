@@ -1,12 +1,38 @@
 ---
 - hosts: localhost
   become: true
+  vars:
+    desktop_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
+    desktop_home: "{{ lookup('env', 'HOME') }}"
   vars_prompt:
     - name: bw_password
       prompt: "Clave maestra de Bitwarden"
       private: true
 
   pre_tasks:
+    - name: Validar usuario y home de escritorio
+      become: false
+      assert:
+        that:
+          - desktop_user | length > 0
+          - desktop_home | length > 0
+          - desktop_user != 'root'
+          - desktop_home != '/root'
+        fail_msg: "El playbook debe ejecutarse como el usuario de escritorio, no como root"
+
+    - name: Comprobar instalación de Bitwarden CLI
+      command: bw --version
+      become: false
+      changed_when: false
+
+    - name: Comprobar autenticación de Bitwarden
+      command: bw status --raw
+      become: false
+      register: bw_status
+      changed_when: false
+      no_log: true
+      failed_when: bw_status.rc != 0 or ((bw_status.stdout | from_json).status | default('unauthenticated')) == 'unauthenticated'
+
     - name: Desbloquear vault y obtener sesión de Bitwarden
       command: bw unlock --passwordenv BW_PASSWORD --raw
       environment:
@@ -25,13 +51,23 @@
       become: false
       environment:
         BW_SESSION: "{{ bw_session }}"
+      changed_when: false
+      no_log: true
+
+    - name: Retirar restos del permiso temporal de pacman
+      become: true
+      file:
+        path: /etc/sudoers.d/pacman-nopasswd
+        state: absent
+
     - name: Permitir sudo sin contraseña para pacman (necesario para AUR/paru)
       become: true
       copy:
         dest: /etc/sudoers.d/pacman-nopasswd
-        content: "{{ lookup('env', 'USER') }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
+        content: "{{ desktop_user }} ALL=(root) NOPASSWD: /usr/bin/pacman\n"
         mode: "0440"
         validate: "visudo -cf %s"
+      notify: Remove temporary pacman sudoers
 
   roles:
     - packages
@@ -41,8 +77,9 @@
     - extensions
     - zen
     - chezmoi
-  post_tasks:
-    - name: Remover permiso NOPASSWD de pacman (limpieza)
+
+  handlers:
+    - name: Remove temporary pacman sudoers
       become: true
       file:
         path: /etc/sudoers.d/pacman-nopasswd
