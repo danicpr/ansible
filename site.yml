@@ -54,30 +54,24 @@
       changed_when: false
       no_log: true
 
-    - name: Retirar restos del permiso temporal de pacman anterior
+    - name: Retirar restos del permiso temporal de pacman
       become: true
       file:
         path: /etc/sudoers.d/pacman-nopasswd
         state: absent
 
-    - name: Retirar restos del permiso temporal de pacman
-      become: true
-      file:
-        path: /etc/sudoers.d/zz-pacman-nopasswd
-        state: absent
-
     - name: Permitir sudo sin contraseña para pacman (necesario para AUR/paru)
       become: true
       copy:
-        dest: /etc/sudoers.d/zz-pacman-nopasswd
-        content: "{{ desktop_user }} ALL=(root) NOPASSWD: /usr/bin/pacman\n"
+        dest: /etc/sudoers.d/pacman-nopasswd
+        content: "{{ desktop_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
         mode: "0440"
         validate: "visudo -cf %s"
       notify: Remove temporary pacman sudoers
 
     - name: Verificar acceso no interactivo a pacman
       become: false
-      command: sudo -n /usr/bin/pacman --version
+      command: sudo -k -n /usr/bin/pacman --version
       register: pacman_sudo_check
       changed_when: false
       failed_when: pacman_sudo_check.rc != 0
@@ -95,8 +89,5 @@
     - name: Remove temporary pacman sudoers
       become: true
       file:
-        path: "{{ item }}"
+        path: /etc/sudoers.d/pacman-nopasswd
         state: absent
-      loop:
-        - /etc/sudoers.d/pacman-nopasswd
-        - /etc/sudoers.d/zz-pacman-nopasswd
