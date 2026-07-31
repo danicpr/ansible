@@ -54,40 +54,61 @@
       changed_when: false
       no_log: true
 
-    - name: Retirar restos del permiso temporal de pacman
-      become: true
-      file:
-        path: /etc/sudoers.d/pacman-nopasswd
-        state: absent
+  tasks:
+    - name: Configurar sudo temporal y ejecutar roles
+      block:
+        - name: Retirar restos del permiso temporal de pacman
+          become: true
+          file:
+            path: /etc/sudoers.d/pacman-nopasswd
+            state: absent
 
-    - name: Permitir sudo sin contraseña para pacman (necesario para AUR/paru)
-      become: true
-      copy:
-        dest: /etc/sudoers.d/pacman-nopasswd
-        content: "{{ desktop_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
-        mode: "0440"
-        validate: "visudo -cf %s"
-      notify: Remove temporary pacman sudoers
+        - name: Permitir sudo sin contraseña para pacman (necesario para AUR/paru)
+          become: true
+          copy:
+            dest: /etc/sudoers.d/pacman-nopasswd
+            content: "{{ desktop_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
+            mode: "0440"
+            validate: "visudo -cf %s"
 
-    - name: Verificar acceso no interactivo a pacman
-      become: false
-      command: sudo -k -n /usr/bin/pacman --version
-      register: pacman_sudo_check
-      changed_when: false
-      failed_when: pacman_sudo_check.rc != 0
+        - name: Verificar acceso no interactivo a pacman
+          become: false
+          command: sudo -k -n /usr/bin/pacman --version
+          register: pacman_sudo_check
+          changed_when: false
+          failed_when: pacman_sudo_check.rc != 0
 
-  roles:
-    - packages
-    - dev_tools
-    - fonts
-    - theme
-    - extensions
-    - zen
-    - chezmoi
+        - name: Aplicar role packages
+          include_role:
+            name: packages
 
-  handlers:
-    - name: Remove temporary pacman sudoers
-      become: true
-      file:
-        path: /etc/sudoers.d/pacman-nopasswd
-        state: absent
+        - name: Aplicar role dev_tools
+          include_role:
+            name: dev_tools
+
+        - name: Aplicar role fonts
+          include_role:
+            name: fonts
+
+        - name: Aplicar role theme
+          include_role:
+            name: theme
+
+        - name: Aplicar role extensions
+          include_role:
+            name: extensions
+
+        - name: Aplicar role zen
+          include_role:
+            name: zen
+
+        - name: Aplicar role chezmoi
+          include_role:
+            name: chezmoi
+
+      always:
+        - name: Remove temporary pacman sudoers
+          become: true
+          file:
+            path: /etc/sudoers.d/pacman-nopasswd
+            state: absent
