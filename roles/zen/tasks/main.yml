@@ -4,4 +4,26 @@
   command: timeout 10 zen-browser --headless --first-startup
   args:
     creates: "{{ desktop_home }}/.config/zen/profiles.ini"
+  register: zen_startup
   changed_when: false
+  failed_when: false
+
+- name: Comprobar perfil de Zen Browser
+  become: false
+  stat:
+    path: "{{ desktop_home }}/.config/zen/profiles.ini"
+  register: zen_profile
+  changed_when: false
+
+- name: Fallar si Zen no creó el perfil
+  become: false
+  fail:
+    msg: >-
+      Zen Browser no creó {{ desktop_home }}/.config/zen/profiles.ini
+      (rc={{ zen_startup.rc | default('desconocido') }}).
+      stderr={{ zen_startup.stderr | default('') }}
+      stdout={{ zen_startup.stdout | default('') }}
+  when: >-
+    not (zen_startup.skipped | default(false)) and
+    ((zen_startup.rc | default(0)) not in [0, 124] or
+    ((zen_startup.rc | default(0)) == 124 and not zen_profile.stat.exists))
