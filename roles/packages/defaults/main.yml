@@ -18,6 +18,7 @@ pacman_packages:
   - fzf
   - zoxide
   - ripgrep
+  - wl-clipboard
   - unrar
   - unzip
 
