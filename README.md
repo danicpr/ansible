@@ -41,7 +41,7 @@ No ejecutes `sudo ansible-playbook`: `-K` permite que Ansible pida la contraseñ
 
 ## Prerrequisitos y extras
 
-La imagen CachyOS + Zsh debe proporcionar `oh-my-zsh`, sus plugins de Zsh, `pkgfile`, `expac` y `starship`; no se instalan aquí como sustituto de esa base. Los paquetes de CachyOS `paru`, `zen-browser-bin`, `onlyoffice-bin` y `vesktop` se mantienen en la estrategia actual del role y no se convierten a una estrategia Arch distinta.
+La imagen CachyOS + Zsh debe proporcionar `oh-my-zsh`, sus plugins de Zsh, `pkgfile` y `expac`; no se instalan aquí como sustituto de esa base. `starship` sí lo instala el role `packages` (está en `pacman_packages`). Los paquetes de CachyOS `paru`, `zen-browser-bin`, `onlyoffice-bin` y `vesktop` se mantienen en la estrategia actual del role y no se convierten a una estrategia Arch distinta.
 
 Los siguientes aliases son conveniencias opcionales y pueden fallar si no instalas sus dependencias: `mirrors` necesita `reflector`; `sun` necesita `tailscale` y `sunshine`; `mvn-new` necesita Maven (`mvn`) y Java; `rip` necesita `expac`. `gh` y `fd` también son extras opcionales. `reflector`, `tailscale`, `sunshine`, Maven/Java, `gh` y `fd` no bloquean el bootstrap base. `rsync` sí se declara porque el hook de Zen lo usa para sincronizar únicamente su directorio `chrome/`.
 

@@ -23,7 +23,4 @@
       (rc={{ zen_startup.rc | default('desconocido') }}).
       stderr={{ zen_startup.stderr | default('') }}
       stdout={{ zen_startup.stdout | default('') }}
-  when: >-
-    not (zen_startup.skipped | default(false)) and
-    ((zen_startup.rc | default(0)) not in [0, 124] or
-    ((zen_startup.rc | default(0)) == 124 and not zen_profile.stat.exists))
+  when: not zen_profile.stat.exists
