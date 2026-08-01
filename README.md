@@ -12,6 +12,8 @@ Este repositorio está preparado exclusivamente para una instalación base de Ca
 
    `bitwarden-cli` solo es necesario si quieres que el playbook genere `~/.secrets/api_keys.zsh` desde tu vault (las claves de DeepSeek/OpenRouter). Sin él, pulsa Enter en el prompt de Bitwarden y los secrets se omiten.
 
+   El playbook también pregunta el nombre y correo para `~/.gitconfig`; pulsar Enter en ambos los omite y se deja el archivo sin sección `[user]`.
+
 2. (Opcional, solo para secrets) Inicia sesión en Bitwarden:
 
    ```bash

@@ -17,6 +17,8 @@
   environment:
     HOME: "{{ desktop_home }}"
     BW_SESSION: "{{ bw_session | default('') }}"
+    GIT_NAME: "{{ git_name | default('') }}"
+    GIT_EMAIL: "{{ git_email | default('') }}"
   no_log: true
   when: not chezmoi_source_repo.stat.exists
 
@@ -41,5 +43,7 @@
   environment:
     HOME: "{{ desktop_home }}"
     BW_SESSION: "{{ bw_session | default('') }}"
+    GIT_NAME: "{{ git_name | default('') }}"
+    GIT_EMAIL: "{{ git_email | default('') }}"
   no_log: true
   when: chezmoi_source_repo.stat.exists

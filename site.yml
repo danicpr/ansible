@@ -9,6 +9,12 @@
       prompt: "Clave maestra de Bitwarden (Enter para omitir secrets)"
       private: true
       default: ""
+    - name: git_name
+      prompt: "Nombre para gitconfig (Enter para omitir)"
+      default: ""
+    - name: git_email
+      prompt: "Correo para gitconfig (Enter para omitir)"
+      default: ""
 
   pre_tasks:
     - name: Validar usuario y home de escritorio
