@@ -36,6 +36,7 @@ pacman_packages:
   - qbittorrent
   - celluloid
   - vesktop
+  - gnome-software
   # Tema MacTahoe
   - extension-manager
   - mission-center
