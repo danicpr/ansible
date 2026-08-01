@@ -19,6 +19,14 @@
   args:
     creates: "{{ desktop_home }}/.cargo/bin/fnm"
 
+- name: Instalar silicon vía Cargo
+  become: false
+  command: cargo install silicon
+  environment:
+    PATH: "{{ desktop_home }}/.cargo/bin:{{ lookup('env', 'PATH') }}"
+  args:
+    creates: "{{ desktop_home }}/.cargo/bin/silicon"
+
 - name: Instalar SDKMAN
   become: false
   shell: curl -s "https://get.sdkman.io?rcupdate=false" | zsh
