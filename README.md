@@ -7,10 +7,12 @@ Este repositorio está preparado exclusivamente para una instalación base de Ca
 1. Instala manualmente las herramientas iniciales:
 
    ```bash
-   sudo pacman -S --needed bitwarden-cli ansible
+   sudo pacman -S --needed ansible
    ```
 
-2. Inicia sesión en Bitwarden:
+   `bitwarden-cli` solo es necesario si quieres que el playbook genere `~/.secrets/api_keys.zsh` desde tu vault (las claves de DeepSeek/OpenRouter). Sin él, pulsa Enter en el prompt de Bitwarden y los secrets se omiten.
+
+2. (Opcional, solo para secrets) Inicia sesión en Bitwarden:
 
    ```bash
    bw login

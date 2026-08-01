@@ -6,8 +6,9 @@
     desktop_home: "{{ lookup('env', 'HOME') }}"
   vars_prompt:
     - name: bw_password
-      prompt: "Clave maestra de Bitwarden"
+      prompt: "Clave maestra de Bitwarden (Enter para omitir secrets)"
       private: true
+      default: ""
 
   pre_tasks:
     - name: Validar usuario y home de escritorio
@@ -24,6 +25,7 @@
       command: bw --version
       become: false
       changed_when: false
+      when: bw_password | length > 0
 
     - name: Comprobar autenticación de Bitwarden
       command: bw status --raw
@@ -32,6 +34,7 @@
       changed_when: false
       no_log: true
       failed_when: bw_status.rc != 0 or ((bw_status.stdout | from_json).status | default('unauthenticated')) == 'unauthenticated'
+      when: bw_password | length > 0
 
     - name: Desbloquear vault y obtener sesión de Bitwarden
       command: bw unlock --passwordenv BW_PASSWORD --raw
@@ -40,11 +43,13 @@
       register: bw_unlock
       no_log: true
       become: false
+      when: bw_password | length > 0
 
     - name: Guardar BW_SESSION como fact
       set_fact:
-        bw_session: "{{ bw_unlock.stdout }}"
+        bw_session: "{{ bw_unlock.stdout | default('') }}"
       no_log: true
+      when: bw_password | length > 0
 
     - name: Sincronizar vault
       command: bw sync
@@ -53,6 +58,7 @@
         BW_SESSION: "{{ bw_session }}"
       changed_when: false
       no_log: true
+      when: bw_password | length > 0
 
   tasks:
     - name: Configurar sudo temporal y ejecutar roles
