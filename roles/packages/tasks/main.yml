@@ -23,6 +23,14 @@
     method: system
   when: flatpak_packages is defined and flatpak_packages | length > 0
 
+- name: Añadir repositorio Gnome nightly
+  community.general.flatpak_remote:
+    name: gnome-nightly
+    state: present
+    flatpakrepo_url: https://nightly.gnome.org/gnome-nightly.flatpakrepo
+    method: system
+  when: gnome_nightly_packages is defined and gnome_nightly_packages | length > 0
+
 - name: Instalar paquetes Flatpak
   community.general.flatpak:
     name: "{{ flatpak_packages }}"

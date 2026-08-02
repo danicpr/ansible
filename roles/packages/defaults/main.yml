@@ -48,8 +48,13 @@ aur_packages:
   - gnome-rounded-blur
 
 flatpak_packages:
+  - org.bluesabre.MenuLibre
+  - org.gnome.gitlab.somas.Apostrophe
   - com.github.tchx84.Flatseal
   - com.stremio.Stremio
   - io.github.flattool.Warehouse
   - it.mijorus.gearlever
   - org.vinegarhq.Sober
+
+gnome_nightly_packages:
+  - org.gnome.NautilusPreviewerDevel
