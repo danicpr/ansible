@@ -12,6 +12,7 @@ pacman_packages:
 
   # Terminal y shell
   - ghostty
+  - ghostty-nautilus
   - starship
   - fastfetch
   - neovim
