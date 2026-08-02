@@ -29,6 +29,7 @@ pacman_packages:
   - rustup
   - bun
   - ttf-jetbrains-mono-nerd
+  - github-cli
 
   # Aplicaciones
   - zen-browser-bin
