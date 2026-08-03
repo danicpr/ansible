@@ -9,6 +9,8 @@ pacman_packages:
   - paru
   - python-pipx
   - rsync
+  - flatpak
+  - shelly-flatpak-backend
 
   # Terminal y shell
   - ghostty
@@ -40,10 +42,10 @@ pacman_packages:
   - celluloid
   - vesktop
   - gnome-software
+
   # Tema MacTahoe
   - extension-manager
   - mission-center
-  - flatpak
 
 aur_packages:
   - gnome-rounded-blur
