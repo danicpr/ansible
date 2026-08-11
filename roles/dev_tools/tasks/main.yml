@@ -32,3 +32,10 @@
   shell: curl -s "https://get.sdkman.io?rcupdate=false" | zsh
   args:
     creates: "{{ desktop_home }}/.sdkman/bin/sdkman-init.sh"
+
+- name: Crear enlace simbólico de Java al PATH
+  become: true
+  ansible.builtin.file:
+    src: "{{ desktop_home }}/.sdkman/candidates/java/current/bin/java"
+    dest: /usr/bin/java
+    state: link
