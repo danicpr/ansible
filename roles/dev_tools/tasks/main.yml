@@ -19,6 +19,18 @@
   args:
     creates: "{{ desktop_home }}/.cargo/bin/fnm"
 
+- name: Instalar Node, establecer versión por defecto y activar pnpm
+  become: false
+  ansible.builtin.shell: |
+    export PATH="{{ desktop_home }}/.cargo/bin:$PATH"
+    eval "$(fnm env --use-on-cd --shell bash)"
+    fnm install --latest
+    fnm default latest
+    corepack enable pnpm
+  args:
+    executable: /bin/bash
+  changed_when: false
+
 - name: Instalar silicon vía Cargo
   become: false
   command: cargo install silicon
@@ -29,7 +41,7 @@
 
 - name: Instalar SDKMAN
   become: false
-  shell: curl -s "https://get.sdkman.io?rcupdate=false" | zsh
+  ansible.builtin.shell: curl -s "https://get.sdkman.io?rcupdate=false" | zsh
   args:
     creates: "{{ desktop_home }}/.sdkman/bin/sdkman-init.sh"
 

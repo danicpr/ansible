@@ -3,6 +3,84 @@
   pacman:
     update_cache: true
 
+- name: Crear directorios temporales para paquetes dummy
+  ansible.builtin.file:
+    path: "/tmp/pkg-dummies/{{ item.name }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - name: dummy-nodejs
+    - name: java-dummy
+
+- name: Generar PKGBUILD para Node.js y npm dummy
+  ansible.builtin.copy:
+    dest: /tmp/pkg-dummies/dummy-nodejs/PKGBUILD
+    mode: '0644'
+    content: |
+      pkgname=dummy-nodejs
+      pkgver=100
+      pkgrel=1
+      pkgdesc="Paquete dummy para satisfacer dependencias de Node.js y npm"
+      arch=('any')
+      url="https://archlinux.org"
+      license=('custom')
+      provides=(
+        "nodejs=${pkgver}"
+        "npm=${pkgver}"
+        "npx=${pkgver}"
+        "nodejs-lts=${pkgver}"
+        "nodejs-current=${pkgver}"
+        "nodejs-lts-hydrogen=${pkgver}"
+        "nodejs-lts-iron=${pkgver}"
+        "nodejs-lts-jod=${pkgver}"
+      )
+
+      package() {
+          mkdir -p "$pkgdir/usr/share/doc/$pkgname"
+          echo "Dummy package" > "$pkgdir/usr/share/doc/$pkgname/README"
+      }
+
+- name: Generar PKGBUILD para Java dummy
+  ansible.builtin.copy:
+    dest: /tmp/pkg-dummies/java-dummy/PKGBUILD
+    mode: '0644'
+    content: |
+      pkgname=java-dummy
+      pkgver=100
+      pkgrel=1
+      pkgdesc="Paquete dummy para satisfacer dependencias de Java"
+      arch=('any')
+      url="https://archlinux.org"
+      license=('custom')
+      provides=(
+        "java-runtime=${pkgver}"
+        "java-runtime-headless=${pkgver}"
+        "java-environment=${pkgver}"
+        "java-environment-openjdk=${pkgver}"
+      )
+
+      package() {
+          mkdir -p "$pkgdir/usr/share/doc/$pkgname"
+          echo "Dummy package" > "$pkgdir/usr/share/doc/$pkgname/README"
+      }
+
+- name: Compilar e instalar paquetes dummy si no existen
+  ansible.builtin.shell: |
+    if ! pacman -Qi {{ item }} > /dev/null 2>&1; then
+      cd /tmp/pkg-dummies/{{ item }}
+      makepkg -si --noconfirm --needed
+    fi
+  loop:
+    - dummy-nodejs
+    - java-dummy
+  become: false
+  changed_when: false
+
+- name: Limpiar archivos temporales de compilación
+  ansible.builtin.file:
+    path: /tmp/pkg-dummies
+    state: absent
+
 - name: Instalar paquetes de repos oficiales
   pacman:
     name: "{{ pacman_packages }}"
