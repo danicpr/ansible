@@ -26,6 +26,8 @@
     eval "$(fnm env --use-on-cd --shell bash)"
     fnm install --latest
     fnm default latest
+    fnm use latest
+    npm install -g corepack
     corepack enable pnpm
   args:
     executable: /bin/bash
