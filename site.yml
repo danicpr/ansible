@@ -4,6 +4,7 @@
   vars:
     desktop_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
     desktop_home: "{{ lookup('env', 'HOME') }}"
+    enable_gnome: "{{ enable_gnome | default(false) | bool }}"
   vars_prompt:
     - name: bw_password
       prompt: "Clave maestra de Bitwarden (Enter para omitir secrets)"
@@ -93,31 +94,39 @@
         - name: Aplicar role packages
           include_role:
             name: packages
+          tags: [packages, base]
 
         - name: Aplicar role dev_tools
           include_role:
             name: dev_tools
+          tags: [dev_tools, dev, base]
 
         - name: Aplicar role fonts
           include_role:
             name: fonts
+          tags: [fonts, base]
 
-        - name: Aplicar role theme
+        - name: Aplicar role theme (Solo GNOME)
           include_role:
             name: theme
+          when: enable_gnome | bool
+          tags: [gnome, theme]
 
-        - name: Aplicar role extensions
+        - name: Aplicar role extensions (Solo GNOME)
           include_role:
             name: extensions
+          when: enable_gnome | bool
+          tags: [gnome, extensions]
 
         - name: Aplicar role zen
           include_role:
             name: zen
+          tags: [zen, base]
 
         - name: Aplicar role chezmoi
           include_role:
             name: chezmoi
-
+          tags: [chezmoi, dotfiles, base]
       always:
         - name: Remove temporary pacman sudoers
           become: true

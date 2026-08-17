@@ -1,8 +1,6 @@
-# Bootstrap CachyOS + GNOME
+# Bootstrap CachyOS / Arch Linux (Agnóstico de DE + Opción GNOME)
 
-Este repositorio está preparado exclusivamente para una instalación base de CachyOS con GNOME y la configuración Zsh que proporciona CachyOS. No es un playbook para Arch genérico, otros escritorios ni sesiones headless.
-
-## Flujo de instalación
+Este repositorio contiene la configuración automatizada para un entorno de desarrollo en CachyOS / Arch Linux. Es **agnóstico del entorno de escritorio (DE)** por defecto (compatible con Hyprland, Sway, KDE Plasma, XFCE, sesiones TTY/headless o GNOME), e incluye un módulo opcional para personalizaciones de GNOME (temas MacTahoe y extensiones).
 
 1. Instala manualmente las herramientas iniciales:
 
@@ -35,14 +33,27 @@ Este repositorio está preparado exclusivamente para una instalación base de Ca
    ansible-galaxy collection install -r requirements.yml
    ```
 
-5. Abre una sesión GNOME gráfica, cierra Zen Browser y ejecuta desde la raíz del repositorio:
+5. Ejecuta el bootstrap desde la raíz del repositorio:
 
+   **Modo recomendado (mediante script lanzador):**
    ```bash
-   ansible-playbook -K site.yml
+   # Modo agnóstico (CLI, Dev Tools, Fuentes, Apps, Dotfiles):
+   ./bootstrap.sh
+
+   # Modo completo con temas y extensiones de GNOME:
+   ./bootstrap.sh --gnome
    ```
 
-No ejecutes `sudo ansible-playbook`: `-K` permite que Ansible pida la contraseña para las tareas root sin cambiar el usuario de escritorio que gestiona `$HOME`. El playbook necesita una sesión GNOME iniciada para las extensiones, D-Bus y Flatpak.
+   **O directamente mediante Ansible Playbook:**
+   ```bash
+   # Modo agnóstico:
+   ansible-playbook -K site.yml -e "enable_gnome=false"
 
+   # Modo GNOME:
+   ansible-playbook -K site.yml -e "enable_gnome=true"
+   ```
+
+No ejecutes `sudo ./bootstrap.sh` ni `sudo ansible-playbook`: `-K` permite que Ansible pida la contraseña para las tareas root sin cambiar el usuario de escritorio que gestiona `$HOME`.
 ## Prerrequisitos y extras
 
 La imagen CachyOS + Zsh debe proporcionar `oh-my-zsh`, sus plugins de Zsh, `pkgfile` y `expac`; no se instalan aquí como sustituto de esa base. `starship` sí lo instala el role `packages` (está en `pacman_packages`). Los paquetes de CachyOS `paru`, `zen-browser-bin`, `onlyoffice-bin` y `vesktop` se mantienen en la estrategia actual del role y no se convierten a una estrategia Arch distinta.

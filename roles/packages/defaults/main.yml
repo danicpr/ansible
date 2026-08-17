@@ -1,4 +1,5 @@
 ---
+# Paquetes base agnósticos (se instalan en cualquier entorno/WM)
 pacman_packages:
   # Base del sistema
   - base-devel
@@ -6,6 +7,8 @@ pacman_packages:
   - curl
   - zsh
   - zip
+  - unzip
+  - unrar
   - paru
   - python-pipx
   - rsync
@@ -14,7 +17,6 @@ pacman_packages:
 
   # Terminal y shell
   - ghostty
-  - ghostty-nautilus
   - starship
   - fastfetch
   - neovim
@@ -22,8 +24,6 @@ pacman_packages:
   - zoxide
   - ripgrep
   - wl-clipboard
-  - unrar
-  - unzip
 
   # Editor
   - zed
@@ -34,21 +34,16 @@ pacman_packages:
   - ttf-jetbrains-mono-nerd
   - github-cli
 
-  # Aplicaciones
+  # Aplicaciones GUI generales
   - zen-browser-bin
   - onlyoffice-bin
   - gimp
   - qbittorrent
   - celluloid
   - vesktop
-  - gnome-software
-
-  # Tema MacTahoe
-  - extension-manager
   - mission-center
 
-aur_packages:
-  - gnome-rounded-blur
+aur_packages: []
 
 flatpak_packages:
   - org.bluesabre.MenuLibre
@@ -58,6 +53,15 @@ flatpak_packages:
   - io.github.flattool.Warehouse
   - it.mijorus.gearlever
   - org.vinegarhq.Sober
+
+# Paquetes específicos de GNOME (solo se instalan si enable_gnome = true)
+gnome_pacman_packages:
+  - ghostty-nautilus
+  - gnome-software
+  - extension-manager
+
+gnome_aur_packages:
+  - gnome-rounded-blur
 
 gnome_nightly_packages:
   - org.gnome.NautilusPreviewerDevel

@@ -3,6 +3,13 @@
   pacman:
     update_cache: true
 
+- name: Asegurar herramientas base de compilación (base-devel y git)
+  pacman:
+    name:
+      - base-devel
+      - git
+    state: present
+
 - name: Crear directorios temporales para paquetes dummy
   ansible.builtin.file:
     path: "/tmp/pkg-dummies/{{ item.name }}"
@@ -83,15 +90,19 @@
 
 - name: Instalar paquetes de repos oficiales
   pacman:
-    name: "{{ pacman_packages }}"
+    name: "{{ pacman_packages + (gnome_pacman_packages if (enable_gnome | default(false) | bool) else []) }}"
     state: present
+
+- name: Definir lista combinada de paquetes AUR
+  set_fact:
+    final_aur_packages: "{{ aur_packages + (gnome_aur_packages if (enable_gnome | default(false) | bool) else []) }}"
 
 - name: Instalar paquetes de AUR
   become: false
-  command: paru --pacman /usr/bin/pacman -S --noconfirm --needed {{ aur_packages | join(' ') }}
+  command: paru --pacman /usr/bin/pacman -S --noconfirm --needed {{ final_aur_packages | join(' ') }}
   register: aur_install
   changed_when: "'there is nothing to do' not in ((aur_install.stdout ~ aur_install.stderr) | lower)"
-  when: aur_packages | length > 0
+  when: final_aur_packages | length > 0
 
 - name: Añadir repositorio Flathub
   community.general.flatpak_remote:
@@ -107,12 +118,20 @@
     state: present
     flatpakrepo_url: https://nightly.gnome.org/gnome-nightly.flatpakrepo
     method: system
-  when: gnome_nightly_packages is defined and gnome_nightly_packages | length > 0
+  when: (enable_gnome | default(false) | bool) and (gnome_nightly_packages is defined and gnome_nightly_packages | length > 0)
 
-- name: Instalar paquetes Flatpak
+- name: Instalar paquetes Flatpak (Flathub)
   community.general.flatpak:
     name: "{{ flatpak_packages }}"
     state: present
     remote: flathub
     method: system
   when: flatpak_packages is defined and flatpak_packages | length > 0
+
+- name: Instalar paquetes Flatpak (Gnome Nightly)
+  community.general.flatpak:
+    name: "{{ gnome_nightly_packages }}"
+    state: present
+    remote: gnome-nightly
+    method: system
+  when: (enable_gnome | default(false) | bool) and (gnome_nightly_packages is defined and gnome_nightly_packages | length > 0)
