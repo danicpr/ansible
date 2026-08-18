@@ -27,12 +27,14 @@
           - desktop_user != 'root'
           - desktop_home != '/root'
         fail_msg: "El playbook debe ejecutarse como el usuario de escritorio, no como root"
+      tags: [always]
 
     - name: Comprobar instalación de Bitwarden CLI
       command: bw --version
       become: false
       changed_when: false
       when: bw_password | length > 0
+      tags: [always, bitwarden, secrets]
 
     - name: Comprobar autenticación de Bitwarden
       command: bw status --raw
@@ -42,6 +44,7 @@
       no_log: true
       failed_when: bw_status.rc != 0 or ((bw_status.stdout | from_json).status | default('unauthenticated')) == 'unauthenticated'
       when: bw_password | length > 0
+      tags: [always, bitwarden, secrets]
 
     - name: Desbloquear vault y obtener sesión de Bitwarden
       command: bw unlock --passwordenv BW_PASSWORD --raw
@@ -51,12 +54,14 @@
       no_log: true
       become: false
       when: bw_password | length > 0
+      tags: [always, bitwarden, secrets]
 
     - name: Guardar BW_SESSION como fact
       set_fact:
         bw_session: "{{ bw_unlock.stdout | default('') }}"
       no_log: true
       when: bw_password | length > 0
+      tags: [always, bitwarden, secrets]
 
     - name: Sincronizar vault
       command: bw sync
@@ -66,7 +71,7 @@
       changed_when: false
       no_log: true
       when: bw_password | length > 0
-
+      tags: [always, bitwarden, secrets]
   tasks:
     - name: Configurar sudo temporal y ejecutar roles
       block:
@@ -75,6 +80,7 @@
           file:
             path: /etc/sudoers.d/pacman-nopasswd
             state: absent
+          tags: [always]
 
         - name: Permitir sudo sin contraseña para pacman (necesario para AUR/paru)
           become: true
@@ -83,6 +89,7 @@
             content: "{{ desktop_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
             mode: "0440"
             validate: "visudo -cf %s"
+          tags: [always]
 
         - name: Verificar acceso no interactivo a pacman
           become: false
@@ -90,7 +97,7 @@
           register: pacman_sudo_check
           changed_when: false
           failed_when: pacman_sudo_check.rc != 0
-
+          tags: [always]
         - name: Aplicar role packages
           include_role:
             name: packages
@@ -133,3 +140,4 @@
           file:
             path: /etc/sudoers.d/pacman-nopasswd
             state: absent
+          tags: [always]
