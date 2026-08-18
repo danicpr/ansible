@@ -10,18 +10,29 @@
       - git
     state: present
 
+- name: Limpiar directorios temporales previos de paquetes dummy
+  ansible.builtin.file:
+    path: /tmp/pkg-dummies
+    state: absent
+  become: true
+
 - name: Crear directorios temporales para paquetes dummy
   ansible.builtin.file:
     path: "/tmp/pkg-dummies/{{ item.name }}"
     state: directory
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
     mode: '0755'
   loop:
     - name: dummy-nodejs
     - name: java-dummy
+  become: true
 
 - name: Generar PKGBUILD para Node.js y npm dummy
   ansible.builtin.copy:
     dest: /tmp/pkg-dummies/dummy-nodejs/PKGBUILD
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
     mode: '0644'
     content: |
       pkgname=dummy-nodejs
@@ -46,10 +57,13 @@
           mkdir -p "$pkgdir/usr/share/doc/$pkgname"
           echo "Dummy package" > "$pkgdir/usr/share/doc/$pkgname/README"
       }
+  become: true
 
 - name: Generar PKGBUILD para Java dummy
   ansible.builtin.copy:
     dest: /tmp/pkg-dummies/java-dummy/PKGBUILD
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
     mode: '0644'
     content: |
       pkgname=java-dummy
@@ -63,14 +77,24 @@
         "java-runtime=${pkgver}"
         "java-runtime-headless=${pkgver}"
         "java-environment=${pkgver}"
+        "java-runtime-openjdk=${pkgver}"
         "java-environment-openjdk=${pkgver}"
+        "java-runtime-headless-openjdk=${pkgver}"
+        "default-runtime=${pkgver}"
+        "default-runtime-headless=${pkgver}"
+        "jre=${pkgver}"
+        "jre-headless=${pkgver}"
+        "jdk=${pkgver}"
+        "jdk-openjdk=${pkgver}"
+        "jre-openjdk=${pkgver}"
+        "jre-openjdk-headless=${pkgver}"
       )
 
       package() {
           mkdir -p "$pkgdir/usr/share/doc/$pkgname"
           echo "Dummy package" > "$pkgdir/usr/share/doc/$pkgname/README"
       }
-
+  become: true
 - name: Compilar e instalar paquetes dummy si no existen
   ansible.builtin.shell: |
     if ! pacman -Qi {{ item }} > /dev/null 2>&1; then
