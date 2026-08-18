@@ -35,7 +35,7 @@
     repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
     dest: /tmp/MacTahoe-gtk-theme
     depth: 1
-
+  when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
 - name: Instalar tema GTK (dark, con bordes)
   become: false
   command: ./install.sh -c dark -b
@@ -95,3 +95,4 @@
   args:
     chdir: /tmp/MacTahoe-gtk-theme
   changed_when: false
+  when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
