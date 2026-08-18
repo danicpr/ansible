@@ -47,9 +47,21 @@
   args:
     creates: "{{ desktop_home }}/.sdkman/bin/sdkman-init.sh"
 
+- name: Instalar versión por defecto de Java vía SDKMAN
+  become: false
+  ansible.builtin.shell: |
+    export SDKMAN_DIR="{{ desktop_home }}/.sdkman"
+    sed -i 's/sdkman_auto_answer=false/sdkman_auto_answer=true/' "${SDKMAN_DIR}/etc/config" || true
+    source "${SDKMAN_DIR}/bin/sdkman-init.sh"
+    sdk install java
+  args:
+    executable: /bin/bash
+    creates: "{{ desktop_home }}/.sdkman/candidates/java/current/bin/java"
+
 - name: Crear enlace simbólico de Java al PATH
   become: true
   ansible.builtin.file:
     src: "{{ desktop_home }}/.sdkman/candidates/java/current/bin/java"
     dest: /usr/bin/java
     state: link
+    force: true
