@@ -16,6 +16,12 @@ pacman_packages:
   - shelly-flatpak-backend
 
   # Terminal y shell
+  - oh-my-zsh-git
+  - zsh-completions
+  - zsh-history-substring-search
+  - zsh-syntax-highlightning
+  - zsh-autosuggestions
+  - powerline-fonts
   - ghostty
   - starship
   - fastfetch
@@ -34,14 +40,13 @@ pacman_packages:
   - ttf-jetbrains-mono-nerd
   - github-cli
 
-  # Aplicaciones GUI generales
+  # Aplicaciones 
   - zen-browser-bin
   - onlyoffice-bin
   - gimp
   - qbittorrent
   - celluloid
   - vesktop
-  - mission-center
 
 aur_packages: []
 
@@ -59,6 +64,7 @@ gnome_pacman_packages:
   - ghostty-nautilus
   - gnome-software
   - extension-manager
+  - mission-center
 
 gnome_aur_packages:
   - gnome-rounded-blur
