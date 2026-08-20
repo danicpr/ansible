@@ -19,7 +19,7 @@ pacman_packages:
   - oh-my-zsh-git
   - zsh-completions
   - zsh-history-substring-search
-  - zsh-syntax-highlightning
+  - zsh-syntax-highlighting
   - zsh-autosuggestions
   - powerline-fonts
   - ghostty
