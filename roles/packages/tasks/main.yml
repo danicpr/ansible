@@ -67,32 +67,107 @@
     mode: '0644'
     content: |
       pkgname=java-dummy
-      pkgver=100
+      pkgver=1.0
       pkgrel=1
-      pkgdesc="Paquete dummy para satisfacer dependencias de Java"
+      pkgdesc="Paquete dummy universal para satisfacer dependencias de Java (SDKMAN)"
       arch=('any')
       url="https://archlinux.org"
       license=('custom')
       provides=(
-        "java-runtime=${pkgver}"
-        "java-runtime-headless=${pkgver}"
-        "java-environment=${pkgver}"
-        "java-runtime-openjdk=${pkgver}"
-        "java-environment-openjdk=${pkgver}"
-        "java-runtime-headless-openjdk=${pkgver}"
-        "default-runtime=${pkgver}"
-        "default-runtime-headless=${pkgver}"
-        "jre=${pkgver}"
-        "jre-headless=${pkgver}"
-        "jdk=${pkgver}"
-        "jdk-openjdk=${pkgver}"
-        "jre-openjdk=${pkgver}"
-        "jre-openjdk-headless=${pkgver}"
+        'java-environment'
+        'java-environment=7'
+        'java-environment=8'
+        'java-environment=9'
+        'java-environment=10'
+        'java-environment=11'
+        'java-environment=12'
+        'java-environment=13'
+        'java-environment=14'
+        'java-environment=15'
+        'java-environment=16'
+        'java-environment=17'
+        'java-environment=18'
+        'java-environment=19'
+        'java-environment=20'
+        'java-environment=21'
+        'java-environment=22'
+        'java-environment=23'
+        'java-environment=24'
+        'java-environment=25'
+        'java-environment-openjdk'
+        'java-environment-openjdk=7'
+        'java-environment-openjdk=8'
+        'java-environment-openjdk=11'
+        'java-environment-openjdk=17'
+        'java-environment-openjdk=21'
+        'java-environment-openjdk=25'
+        'jdk'
+        'jdk-openjdk'
+        'java-runtime'
+        'java-runtime=7'
+        'java-runtime=8'
+        'java-runtime=9'
+        'java-runtime=10'
+        'java-runtime=11'
+        'java-runtime=12'
+        'java-runtime=13'
+        'java-runtime=14'
+        'java-runtime=15'
+        'java-runtime=16'
+        'java-runtime=17'
+        'java-runtime=18'
+        'java-runtime=19'
+        'java-runtime=20'
+        'java-runtime=21'
+        'java-runtime=22'
+        'java-runtime=23'
+        'java-runtime=24'
+        'java-runtime=25'
+        'java-runtime-openjdk'
+        'java-runtime-openjdk=7'
+        'java-runtime-openjdk=8'
+        'java-runtime-openjdk=11'
+        'java-runtime-openjdk=17'
+        'java-runtime-openjdk=21'
+        'java-runtime-openjdk=25'
+        'jre'
+        'jre-openjdk'
+        'java-runtime-headless'
+        'java-runtime-headless=7'
+        'java-runtime-headless=8'
+        'java-runtime-headless=9'
+        'java-runtime-headless=10'
+        'java-runtime-headless=11'
+        'java-runtime-headless=12'
+        'java-runtime-headless=13'
+        'java-runtime-headless=14'
+        'java-runtime-headless=15'
+        'java-runtime-headless=16'
+        'java-runtime-headless=17'
+        'java-runtime-headless=18'
+        'java-runtime-headless=19'
+        'java-runtime-headless=20'
+        'java-runtime-headless=21'
+        'java-runtime-headless=22'
+        'java-runtime-headless=23'
+        'java-runtime-headless=24'
+        'java-runtime-headless=25'
+        'java-runtime-headless-openjdk'
+        'java-runtime-headless-openjdk=7'
+        'java-runtime-headless-openjdk=8'
+        'java-runtime-headless-openjdk=11'
+        'java-runtime-headless-openjdk=17'
+        'java-runtime-headless-openjdk=21'
+        'java-runtime-headless-openjdk=25'
+        'jre-headless'
+        'jre-openjdk-headless'
+        'default-runtime'
+        'default-runtime-headless'
       )
 
       package() {
           mkdir -p "$pkgdir/usr/share/doc/$pkgname"
-          echo "Dummy package" > "$pkgdir/usr/share/doc/$pkgname/README"
+          echo "Paquete dummy universal para satisfacer dependencias de Java (SDKMAN)" > "$pkgdir/usr/share/doc/$pkgname/README"
       }
   become: true
 - name: Compilar e instalar paquetes dummy si no existen
