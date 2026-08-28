@@ -5,12 +5,13 @@
   args:
     creates: "{{ desktop_home }}/.rustup/toolchains"
 
-- name: Instalar oh-my-pi (pi-coding-agent) vía Bun
+- name: Instalar omp vía script oficial
   become: false
-  command: bun install -g @oh-my-pi/pi-coding-agent
+  ansible.builtin.shell: curl -fsSL https://omp.sh/install | sh
+  environment:
+    HOME: "{{ desktop_home }}"
   args:
-    creates: "{{ desktop_home }}/.bun/install/global/node_modules/@oh-my-pi"
-
+    creates: "{{ desktop_home }}/.local/bin/omp"
 - name: Instalar fnm vía Cargo
   become: false
   command: cargo install fnm
