@@ -247,6 +247,11 @@
     groups: docker
     append: true
   when: "'docker' in pacman_packages"
+
+- name: Establecer Zsh como shell por defecto del usuario
+  user:
+    name: "{{ desktop_user }}"
+    shell: /usr/bin/zsh
 - name: Definir lista combinada de paquetes AUR
   set_fact:
     final_aur_packages: "{{ aur_packages + (gnome_aur_packages if (enable_gnome | default(false) | bool) else []) }}"

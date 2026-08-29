@@ -5,6 +5,10 @@
   args:
     creates: "{{ desktop_home }}/.rustup/toolchains"
 
+- name: Añadir componentes base de Rust (rust-analyzer, clippy, rustfmt)
+  become: false
+  command: rustup component add rust-analyzer clippy rustfmt
+  changed_when: false
 - name: Instalar omp vía script oficial
   become: false
   ansible.builtin.shell: curl -fsSL https://omp.sh/install | sh
