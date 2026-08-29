@@ -14,7 +14,6 @@ pacman_packages:
   - rsync
   - flatpak
   - shelly-flatpak-backend
-
   # Terminal y shell
   - oh-my-zsh-git
   - zsh-completions
@@ -30,6 +29,12 @@ pacman_packages:
   - zoxide
   - ripgrep
   - wl-clipboard
+  # Fuentes
+  - ttf-jetbrains-mono-nerd
+  - ttf-meslo-nerd
+  - noto-fonts
+  - noto-fonts-cjk
+  - noto-fonts-emoji
 
   # Editor
   - zed
@@ -37,9 +42,9 @@ pacman_packages:
   # Desarrollo
   - rustup
   - bun
-  - ttf-jetbrains-mono-nerd
+  - uv
+  - docker
   - github-cli
-
   # Aplicaciones 
   - zen-browser-bin
   - onlyoffice-bin
@@ -47,7 +52,6 @@ pacman_packages:
   - qbittorrent
   - celluloid
   - vesktop
-
 aur_packages: []
 
 flatpak_packages:
@@ -58,7 +62,7 @@ flatpak_packages:
   - io.github.flattool.Warehouse
   - it.mijorus.gearlever
   - org.vinegarhq.Sober
-
+  - in.cinny.Cinny
 # Paquetes específicos de GNOME (solo se instalan si enable_gnome = true)
 gnome_pacman_packages:
   - ghostty-nautilus
@@ -71,3 +75,13 @@ gnome_aur_packages:
 
 gnome_nightly_packages:
   - org.gnome.NautilusPreviewerDevel
+
+# Drivers y aceleración para GPU Intel (Arc / iGPU)
+intel_pacman_packages:
+  - intel-compute-runtime
+  - intel-media-driver
+  - vpl-gpu-rt
+  - vulkan-intel
+  - lib32-vulkan-intel
+  - clinfo
+  - libva-utils

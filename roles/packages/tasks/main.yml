@@ -231,9 +231,22 @@
 
 - name: Instalar paquetes de repos oficiales
   pacman:
-    name: "{{ pacman_packages + (gnome_pacman_packages if (enable_gnome | default(false) | bool) else []) }}"
+    name: "{{ pacman_packages + (gnome_pacman_packages if (enable_gnome | default(false) | bool) else []) + (intel_pacman_packages if (enable_intel | default(false) | bool) else []) }}"
     state: present
 
+- name: Habilitar e iniciar servicio Docker
+  systemd:
+    name: docker
+    enabled: true
+    state: started
+  when: "'docker' in pacman_packages"
+
+- name: Añadir usuario al grupo docker
+  user:
+    name: "{{ desktop_user }}"
+    groups: docker
+    append: true
+  when: "'docker' in pacman_packages"
 - name: Definir lista combinada de paquetes AUR
   set_fact:
     final_aur_packages: "{{ aur_packages + (gnome_aur_packages if (enable_gnome | default(false) | bool) else []) }}"

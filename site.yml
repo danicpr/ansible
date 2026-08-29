@@ -5,6 +5,7 @@
     desktop_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
     desktop_home: "{{ lookup('env', 'HOME') }}"
     enable_gnome: "{{ enable_gnome | default(false) | bool }}"
+    enable_intel: "{{ enable_intel | default(false) | bool }}"
   vars_prompt:
     - name: bw_password
       prompt: "Clave maestra de Bitwarden (Enter para omitir secrets)"

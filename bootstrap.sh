@@ -31,8 +31,9 @@ show_help() {
     printf "%bOpciones:%b\n" "${C_BOLD}" "${C_RESET}"
     printf "  %b--gnome%b              Instala paquetes base + temas MacTahoe y extensiones GNOME.\n" "${C_CYAN}" "${C_RESET}"
     printf "  %b--no-gnome, --agnostic%b Modo 100%% agnóstico (CLI, Dev, Fonts, Apps, Dotfiles). Omite temas/extensiones GNOME.\n" "${C_CYAN}" "${C_RESET}"
+    printf "  %b--intel%b              Instala drivers y aceleración para GPU Intel (Arc / iGPU: OpenCL/Vulkan/VA-API).\n" "${C_CYAN}" "${C_RESET}"
+    printf "  %b--no-intel%b           Omite la instalación de drivers para GPU Intel.\n" "${C_CYAN}" "${C_RESET}"
     printf "  %b-h, --help%b            Muestra esta ayuda y sale.\n\n" "${C_CYAN}" "${C_RESET}"
-    printf "%bArgumentos adicionales:%b\n" "${C_BOLD}" "${C_RESET}"
     printf "  Cualquier otro argumento no reconocido se pasará directamente a %bansible-playbook%b.\n" "${C_BOLD}" "${C_RESET}"
     printf "  Ejemplo: ./bootstrap.sh --gnome --tags \"packages,dev\" -vv\n\n"
 }
@@ -50,6 +51,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 
 ENABLE_GNOME=""
+ENABLE_INTEL=""
 ANSIBLE_EXTRA_ARGS=()
 
 # 2. Parsear argumentos
@@ -61,6 +63,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-gnome|--agnostic)
             ENABLE_GNOME="false"
+            shift
+            ;;
+        --intel|--intel-gpu)
+            ENABLE_INTEL="true"
+            shift
+            ;;
+        --no-intel)
+            ENABLE_INTEL="false"
             shift
             ;;
         -h|--help)
@@ -119,6 +129,29 @@ else
     log_ok "Modo seleccionado: ${C_BOLD}Agnóstico de DE${C_RESET} (Base, CLI, Dev Tools, Fuentes, Apps, Dotfiles)"
 fi
 
+# 4. Determinar si se deben instalar drivers de Intel GPU si no se especificó flag
+if [[ -z "$ENABLE_INTEL" ]]; then
+    if lspci 2>/dev/null | grep -iE "VGA|3D|Display" | grep -qi "Intel"; then
+        if [[ -t 0 ]]; then
+            log_info "Se detectó GPU Intel en el sistema."
+            read -rp "$(printf "${C_YELLOW}? ¿Deseas instalar drivers y aceleración para Intel GPU (Arc/iGPU)? [S/n]: ${C_RESET}")" answer
+            answer="${answer:-s}"
+            if [[ "$answer" =~ ^[sSyY]$ ]]; then
+                ENABLE_INTEL="true"
+            else
+                ENABLE_INTEL="false"
+            fi
+        else
+            ENABLE_INTEL="true"
+        fi
+    else
+        ENABLE_INTEL="false"
+    fi
+fi
+
+if [[ "$ENABLE_INTEL" == "true" ]]; then
+    log_ok "Drivers Intel: ${C_BOLD}Activados${C_RESET} (Vulkan, VA-API, OpenCL/Level Zero para Arc/iGPU)"
+fi
 printf "\n"
 
 # 4. Comprobar e instalar Ansible si no existe
@@ -150,4 +183,5 @@ printf "\n${C_CYAN}${C_BOLD}--- Iniciando ejecución de Ansible Playbook ---${C_
 # 7. Ejecutar Ansible Playbook
 exec ansible-playbook -K site.yml \
     -e "enable_gnome=${ENABLE_GNOME}" \
+    -e "enable_intel=${ENABLE_INTEL}" \
     "${ANSIBLE_EXTRA_ARGS[@]+"${ANSIBLE_EXTRA_ARGS[@]}"}"
