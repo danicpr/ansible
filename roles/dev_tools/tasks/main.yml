@@ -66,3 +66,52 @@
     dest: /usr/bin/java
     state: link
     force: true
+
+- name: Crear directorio systemd de usuario
+  ansible.builtin.file:
+    path: "{{ desktop_home }}/.config/systemd/user"
+    state: directory
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
+    mode: '0755'
+  become: false
+
+- name: Instalar servicio systemd de sincronización de sesiones OMP (rclone)
+  ansible.builtin.copy:
+    dest: "{{ desktop_home }}/.config/systemd/user/omp-sync.service"
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Sincronizar sesiones de OMP a Google Drive (rclone)
+      After=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=true
+      ExecStart=/usr/bin/rclone sync %h/.omp/agent/sessions gdrive:omp-backup/sessions --fast-list --transfers 4 --quiet
+      ExecStop=/usr/bin/rclone sync %h/.omp/agent/sessions gdrive:omp-backup/sessions --fast-list --transfers 4 --quiet
+      TimeoutStopSec=30
+
+      [Install]
+      WantedBy=default.target
+  become: false
+
+- name: Instalar timer systemd para sincronización periódica de OMP
+  ansible.builtin.copy:
+    dest: "{{ desktop_home }}/.config/systemd/user/omp-sync.timer"
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Ejecutar sincronización de sesiones de OMP cada 30 minutos
+
+      [Timer]
+      OnCalendar=*:0/30
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+  become: false

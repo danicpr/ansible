@@ -45,6 +45,7 @@ pacman_packages:
   - uv
   - docker
   - github-cli
+  - rclone
   # Aplicaciones 
   - zen-browser-bin
   - onlyoffice-bin
