@@ -10,6 +10,48 @@
       - git
     state: present
 
+# --- Configuración de Chaotic AUR ---
+- name: Comprobar si chaotic-mirrorlist existe
+  ansible.builtin.stat:
+    path: /etc/pacman.d/chaotic-mirrorlist
+  register: chaotic_mirrorlist
+
+- name: Importar y firmar clave primaria de Chaotic AUR
+  become: true
+  ansible.builtin.shell: |
+    pacman-key --recv-key 305EF22CD4830FEE --keyserver keyserver.ubuntu.com
+    pacman-key --lsign-key 305EF22CD4830FEE
+  when: not chaotic_mirrorlist.stat.exists
+
+- name: Instalar chaotic-keyring y chaotic-mirrorlist
+  become: true
+  ansible.builtin.command: >
+    pacman -U --noconfirm --needed
+    https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst
+    https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst
+  when: not chaotic_mirrorlist.stat.exists
+
+- name: Comprobar si Chaotic AUR ya está en pacman.conf
+  ansible.builtin.command: grep -q '^\[chaotic-aur\]' /etc/pacman.conf
+  register: chaotic_pacman_conf
+  failed_when: false
+  changed_when: false
+  become: false
+
+- name: Añadir repositorio Chaotic AUR a pacman.conf
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/pacman.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK (chaotic-aur)"
+    block: |
+      [chaotic-aur]
+      Include = /etc/pacman.d/chaotic-mirrorlist
+  when: chaotic_pacman_conf.rc != 0
+
+- name: Actualizar base de datos de pacman tras configurar repositorios
+  pacman:
+    update_cache: true
+  when: not chaotic_mirrorlist.stat.exists or chaotic_pacman_conf.rc != 0
 - name: Limpiar directorios temporales previos de paquetes dummy
   ansible.builtin.file:
     path: /tmp/pkg-dummies
