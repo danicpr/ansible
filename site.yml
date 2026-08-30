@@ -6,17 +6,15 @@
     desktop_home: "{{ lookup('env', 'HOME') }}"
     enable_gnome: "{{ enable_gnome | default(false) | bool }}"
     enable_intel: "{{ enable_intel | default(false) | bool }}"
+    enable_bitwarden: "{{ enable_bitwarden | default(false) | bool }}"
+    bw_password: "{{ bw_password | default('') }}"
   vars_prompt:
-    - name: bw_password
-      prompt: "Clave maestra de Bitwarden (Enter para omitir secrets)"
-      private: true
-      default: ""
     - name: git_name
-      prompt: "Nombre para gitconfig (Enter para omitir)"
-      default: ""
+      prompt: "Nombre para gitconfig"
+      default: "Daniel Borre"
     - name: git_email
-      prompt: "Correo para gitconfig (Enter para omitir)"
-      default: ""
+      prompt: "Correo para gitconfig"
+      default: "dborrecaro@gmail.com"
 
   pre_tasks:
     - name: Validar usuario y home de escritorio
@@ -34,7 +32,7 @@
       command: bw --version
       become: false
       changed_when: false
-      when: bw_password | length > 0
+      when: enable_bitwarden | bool
       tags: [always, bitwarden, secrets]
 
     - name: Comprobar autenticación de Bitwarden
@@ -44,7 +42,7 @@
       changed_when: false
       no_log: true
       failed_when: bw_status.rc != 0 or ((bw_status.stdout | from_json).status | default('unauthenticated')) == 'unauthenticated'
-      when: bw_password | length > 0
+      when: enable_bitwarden | bool
       tags: [always, bitwarden, secrets]
 
     - name: Desbloquear vault y obtener sesión de Bitwarden
@@ -54,25 +52,26 @@
       register: bw_unlock
       no_log: true
       become: false
-      when: bw_password | length > 0
+      when: enable_bitwarden | bool and (bw_password | length > 0)
       tags: [always, bitwarden, secrets]
 
     - name: Guardar BW_SESSION como fact
       set_fact:
-        bw_session: "{{ bw_unlock.stdout | default('') }}"
+        bw_session: "{{ bw_unlock.stdout | default(lookup('env', 'BW_SESSION'), true) }}"
       no_log: true
-      when: bw_password | length > 0
+      when: enable_bitwarden | bool
       tags: [always, bitwarden, secrets]
 
     - name: Sincronizar vault
       command: bw sync
       become: false
       environment:
-        BW_SESSION: "{{ bw_session }}"
+        BW_SESSION: "{{ bw_session | default('') }}"
       changed_when: false
       no_log: true
-      when: bw_password | length > 0
+      when: enable_bitwarden | bool and (bw_session | default('') | length > 0)
       tags: [always, bitwarden, secrets]
+
   tasks:
     - name: Configurar sudo temporal y ejecutar roles
       block:
@@ -99,6 +98,7 @@
           changed_when: false
           failed_when: pacman_sudo_check.rc != 0
           tags: [always]
+
         - name: Aplicar role packages
           include_role:
             name: packages
@@ -133,7 +133,7 @@
         - name: Aplicar role chezmoi
           include_role:
             name: chezmoi
-          tags: [chezmoi, dotfiles, base]
+          tags: [chezmoi, dotfiles, base, bitwarden, secrets]
       always:
         - name: Remove temporary pacman sudoers
           become: true

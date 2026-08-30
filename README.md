@@ -2,58 +2,45 @@
 
 Este repositorio contiene la configuración automatizada para un entorno de desarrollo en CachyOS / Arch Linux. Es **agnóstico del entorno de escritorio (DE)** por defecto (compatible con Hyprland, Sway, KDE Plasma, XFCE, sesiones TTY/headless o GNOME), e incluye un módulo opcional para personalizaciones de GNOME (temas MacTahoe y extensiones).
 
-1. Instala manualmente las herramientas iniciales:
+---
 
+## 1. Bootstrap del Sistema
+
+El bootstrap instala paquetes del sistema, herramientas de desarrollo (Rust, FNM/Node, PNPM, SDKMAN/Java, Silicon, OMP), fuentes, temas y dotfiles (Chezmoi) de forma completamente limpia y sin bloqueos interactivos.
+
+```bash
+# Modo agnóstico (CLI, Dev Tools, Fuentes, Apps, Dotfiles):
+./bootstrap.sh
+
+# O modo completo con temas y extensiones de GNOME:
+./bootstrap.sh --gnome
+```
+
+*(No ejecutes `sudo ./bootstrap.sh`: el script gestiona las elevaciones de permisos automáticamente).*
+
+---
+
+## 2. Inyección de Secretos y Bitwarden (Paso posterior)
+
+Una vez que el bootstrap instala Node/FNM y las herramientas base, puedes sincronizar tus secretos (API keys y clave SSH `github_vibe`):
+
+1. **Instalar Bitwarden CLI:**
    ```bash
-   sudo pacman -S --needed ansible
+   ./install_bw.sh
    ```
-
-   `bitwarden-cli` solo es necesario si quieres que el playbook genere `~/.secrets/api_keys.zsh` desde tu vault (las claves de DeepSeek/OpenRouter). Sin él, pulsa Enter en el prompt de Bitwarden y los secrets se omiten.
-
-   El playbook también pregunta el nombre y correo para `~/.gitconfig`; pulsar Enter en ambos los omite y se deja el archivo sin sección `[user]`.
-
-2. (Opcional, solo para secrets) Inicia sesión en Bitwarden:
-
+2. **Iniciar sesión en Bitwarden:**
    ```bash
    bw login
    ```
-
-3. Copia este repositorio al equipo y entra en su raíz.
-
-4. Comprueba que están disponibles las tareas Flatpak:
-
+3. **Sincronizar secretos y dotfiles con Ansible:**
    ```bash
-   ansible-doc community.general.flatpak
-   ansible-doc community.general.flatpak_remote
+   ./bw.sh
    ```
 
-   Si alguna no existe, instala la colección solo entonces:
+Este script ejecuta únicamente las tareas de Bitwarden y Chezmoi para inyectar `~/.secrets/api_keys.zsh` y la clave SSH `~/.ssh/id_github_vibe`.
 
-   ```bash
-   ansible-galaxy collection install -r requirements.yml
-   ```
+---
 
-5. Ejecuta el bootstrap desde la raíz del repositorio:
-
-   **Modo recomendado (mediante script lanzador):**
-   ```bash
-   # Modo agnóstico (CLI, Dev Tools, Fuentes, Apps, Dotfiles):
-   ./bootstrap.sh
-
-   # Modo completo con temas y extensiones de GNOME:
-   ./bootstrap.sh --gnome
-   ```
-
-   **O directamente mediante Ansible Playbook:**
-   ```bash
-   # Modo agnóstico:
-   ansible-playbook -K site.yml -e "enable_gnome=false"
-
-   # Modo GNOME:
-   ansible-playbook -K site.yml -e "enable_gnome=true"
-   ```
-
-No ejecutes `sudo ./bootstrap.sh` ni `sudo ansible-playbook`: `-K` permite que Ansible pida la contraseña para las tareas root sin cambiar el usuario de escritorio que gestiona `$HOME`.
 ## Prerrequisitos y extras
 
 La imagen CachyOS + Zsh debe proporcionar `oh-my-zsh`, sus plugins de Zsh, `pkgfile` y `expac`; no se instalan aquí como sustituto de esa base. `starship` sí lo instala el role `packages` (está en `pacman_packages`). Los paquetes de CachyOS `paru`, `zen-browser-bin`, `onlyoffice-bin` y `vesktop` se mantienen en la estrategia actual del role y no se convierten a una estrategia Arch distinta.
@@ -62,11 +49,19 @@ Los siguientes aliases son conveniencias opcionales y pueden fallar si no instal
 
 Mantén Zen cerrado mientras se aplica la configuración para que el hook pueda actualizar el perfil sin que el navegador sobrescriba sus archivos.
 
-## Chezmoi y secretos
+---
 
-El playbook instala chezmoi en `~/.local/bin`, pasa `BW_SESSION` sin imprimirlo y aplica el source de dotfiles como usuario de escritorio. El secreto `~/.secrets/api_keys.zsh` se genera desde Bitwarden con permisos privados; no lo copies al repositorio.
+## Chezmoi y cuentas de Git / SSH
 
-Los cambios locales de `/home/dev/.local/share/chezmoi` solo llegan a otro equipo si copias ese source repo o lo publicas posteriormente con una operación explícita. Este flujo no hace `git push`, y `chezmoi update` tampoco forma parte del bootstrap automático.
+El playbook instala chezmoi en `~/.local/bin` y aplica el source de dotfiles como usuario de escritorio.
+
+- Si el usuario es **Daniel Borre**:
+  - Se integra la clave SSH `github_vibe` desde Bitwarden en `~/.ssh/id_github_vibe`.
+  - Se configura el host `github-vibe` en `~/.ssh/config`.
+  - Se aplica `includeIf` en `.gitconfig` para `~/vibe/`, `~/ansible` y `~/.local/share/chezmoi` con la cuenta secundaria de GitHub (`danisecundarioxd@gmail.com`).
+- Para cualquier otro usuario, se mantiene la configuración global estándar.
+
+---
 
 ## Política de OMP
 

@@ -25,6 +25,7 @@ log_warn() {
 log_error() {
     printf "${C_RED}${C_BOLD}[ERROR]${C_RESET} %s\n" "$1" >&2
 }
+
 show_help() {
     printf "%bUso:%b ./bootstrap.sh [OPCIONES] [-- ANSIBLE_ARGS...]\n\n" "${C_BOLD}" "${C_RESET}"
     printf "Script lanzador agnóstico de configuración de sistema para CachyOS / Arch Linux.\n\n"
@@ -33,6 +34,8 @@ show_help() {
     printf "  %b--no-gnome, --agnostic%b Modo 100%% agnóstico (CLI, Dev, Fonts, Apps, Dotfiles). Omite temas/extensiones GNOME.\n" "${C_CYAN}" "${C_RESET}"
     printf "  %b--intel%b              Instala drivers y aceleración para GPU Intel (Arc / iGPU: OpenCL/Vulkan/VA-API).\n" "${C_CYAN}" "${C_RESET}"
     printf "  %b--no-intel%b           Omite la instalación de drivers para GPU Intel.\n" "${C_CYAN}" "${C_RESET}"
+    printf "  %b--bitwarden%b          Habilita la integración y desbloqueo de Bitwarden (omitido por defecto en bootstrap).\n" "${C_CYAN}" "${C_RESET}"
+    printf "  %b--no-bitwarden%b       Deshabilita explícitamente Bitwarden.\n" "${C_CYAN}" "${C_RESET}"
     printf "  %b-h, --help%b            Muestra esta ayuda y sale.\n\n" "${C_CYAN}" "${C_RESET}"
     printf "  Cualquier otro argumento no reconocido se pasará directamente a %bansible-playbook%b.\n" "${C_BOLD}" "${C_RESET}"
     printf "  Ejemplo: ./bootstrap.sh --gnome --tags \"packages,dev\" -vv\n\n"
@@ -52,6 +55,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ENABLE_GNOME=""
 ENABLE_INTEL=""
+ENABLE_BITWARDEN="false"
 ANSIBLE_EXTRA_ARGS=()
 
 # 2. Parsear argumentos
@@ -71,6 +75,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-intel)
             ENABLE_INTEL="false"
+            shift
+            ;;
+        --bitwarden)
+            ENABLE_BITWARDEN="true"
+            shift
+            ;;
+        --no-bitwarden)
+            ENABLE_BITWARDEN="false"
             shift
             ;;
         -h|--help)
@@ -154,14 +166,14 @@ if [[ "$ENABLE_INTEL" == "true" ]]; then
 fi
 printf "\n"
 
-# 4. Comprobar e instalar Ansible si no existe
+# 5. Comprobar e instalar Ansible si no existe
 if ! command -v ansible-playbook >/dev/null 2>&1; then
     log_warn "Ansible no está instalado. Instalando con pacman..."
     sudo pacman -S --needed --noconfirm ansible
     log_ok "Ansible instalado correctamente."
 fi
 
-# 5. Comprobar colección community.general
+# 6. Comprobar colección community.general
 log_info "Verificando dependencias de colecciones de Ansible..."
 if ! ansible-galaxy collection list community.general &>/dev/null; then
     log_info "Instalando requisitos de Ansible Galaxy desde requirements.yml..."
@@ -171,17 +183,11 @@ else
     log_ok "Colección community.general ya disponible."
 fi
 
-# 6. Comprobación opcional de Bitwarden CLI
-if ! command -v bw >/dev/null 2>&1; then
-    log_warn "Bitwarden CLI ('bw') no está en PATH."
-    log_warn "Si deseas inyectar secrets, ejecuta './bw.sh' antes del bootstrap o instálalo."
-    log_warn "De lo contrario, simplemente presiona Enter en el prompt de Bitwarden."
-fi
-
 printf "\n${C_CYAN}${C_BOLD}--- Iniciando ejecución de Ansible Playbook ---${C_RESET}\n\n"
 
 # 7. Ejecutar Ansible Playbook
 exec ansible-playbook -K site.yml \
     -e "enable_gnome=${ENABLE_GNOME}" \
     -e "enable_intel=${ENABLE_INTEL}" \
+    -e "enable_bitwarden=${ENABLE_BITWARDEN}" \
     "${ANSIBLE_EXTRA_ARGS[@]+"${ANSIBLE_EXTRA_ARGS[@]}"}"
