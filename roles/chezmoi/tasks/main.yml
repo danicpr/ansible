@@ -12,49 +12,73 @@
     mode: "0700"
   become: false
 
-- name: Obtener clave SSH github_vibe desde Bitwarden
-  ansible.builtin.shell: |
-    export BW_SESSION="{{ bw_session }}"
-    python3 -c "
-import json, subprocess, sys
-try:
-    res = subprocess.run(['bw', 'get', 'item', 'github_vibe', '--raw'], capture_output=True, text=True, check=True)
-    item = json.loads(res.stdout)
-    key = ''
-    if 'sshKey' in item and isinstance(item['sshKey'], dict) and item['sshKey'].get('privateKey'):
-        key = item['sshKey']['privateKey']
-    elif item.get('notes') and 'PRIVATE KEY' in item['notes']:
-        key = item['notes']
-    elif item.get('login', {}).get('password') and 'PRIVATE KEY' in item['login']['password']:
-        key = item['login']['password']
-    else:
-        for f in item.get('fields', []):
-            if 'PRIVATE KEY' in f.get('value', ''):
-                key = f['value']
-                break
-        if not key and item.get('notes'):
-            key = item['notes']
-    if key:
-        key = key.strip() + '\n'
-        with open('{{ desktop_home }}/.ssh/id_github_vibe', 'w') as f:
-            f.write(key)
-        print('KEY_SAVED')
-    else:
-        print('KEY_NOT_FOUND', file=sys.stderr)
-except Exception as e:
-    print(f'ERROR: {e}', file=sys.stderr)
-    sys.exit(1)
-"
-  args:
-    executable: /bin/bash
-  register: bw_ssh_key_result
+- name: Buscar item de clave SSH vibe en Bitwarden
+  ansible.builtin.command: bw list items --search vibe --raw
+  environment:
+    BW_SESSION: "{{ bw_session | default(lookup('env', 'BW_SESSION', default=''), true) }}"
+    PATH: "{{ desktop_home }}/.local/bin:{{ desktop_home }}/.bun/bin:{{ desktop_home }}/.cargo/bin:{{ ansible_env.PATH }}"
+  register: bw_vibe_items_raw
   become: false
-  no_log: true
-  changed_when: "'KEY_SAVED' in bw_ssh_key_result.stdout"
+  changed_when: false
   failed_when: false
   when:
-    - is_daniel_borre | bool
-    - bw_session | default('') | length > 0
+    - (bw_session | default(lookup('env', 'BW_SESSION', default=''), true) | length > 0)
+
+- name: Extraer y guardar clave SSH privada desde Bitwarden
+  ansible.builtin.copy:
+    dest: "{{ desktop_home }}/.ssh/id_github_vibe"
+    content: |
+      {% set raw_parsed = bw_vibe_items_raw.stdout | from_json %}
+      {% set items = raw_parsed if (raw_parsed is iterable and raw_parsed is not mapping) else [raw_parsed] %}
+      {% set found_key = namespace(val='') %}
+      {% for it in items if it is mapping %}
+        {% if not found_key.val %}
+          {% if 'sshKey' in it and it.sshKey is mapping and 'privateKey' in it.sshKey and it.sshKey.privateKey %}
+            {% set found_key.val = it.sshKey.privateKey %}
+          {% elif 'notes' in it and it.notes is string and 'PRIVATE KEY' in it.notes %}
+            {% set found_key.val = it.notes %}
+          {% elif 'login' in it and it.login is mapping and 'password' in it.login and it.login.password is string and 'PRIVATE KEY' in it.login.password %}
+            {% set found_key.val = it.login.password %}
+          {% elif 'fields' in it and it.fields is iterable %}
+            {% for f in it.fields if f is mapping and 'PRIVATE KEY' in (f.value | default('')) %}
+              {% set found_key.val = f.value %}
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {{ found_key.val | trim }}
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
+    mode: "0600"
+  become: false
+  when:
+    - bw_vibe_items_raw is defined
+    - bw_vibe_items_raw.rc == 0
+    - (bw_vibe_items_raw.stdout | default('') | length > 0)
+    - "'PRIVATE KEY' in bw_vibe_items_raw.stdout"
+
+- name: Extraer y guardar clave SSH publica desde Bitwarden
+  ansible.builtin.copy:
+    dest: "{{ desktop_home }}/.ssh/id_github_vibe.pub"
+    content: |
+      {% set raw_parsed = bw_vibe_items_raw.stdout | from_json %}
+      {% set items = raw_parsed if (raw_parsed is iterable and raw_parsed is not mapping) else [raw_parsed] %}
+      {% set found_pub = namespace(val='') %}
+      {% for it in items if it is mapping %}
+        {% if not found_pub.val and 'sshKey' in it and it.sshKey is mapping and 'publicKey' in it.sshKey and it.sshKey.publicKey %}
+          {% set found_pub.val = it.sshKey.publicKey %}
+        {% endif %}
+      {% endfor %}
+      {{ found_pub.val | trim }}
+    owner: "{{ desktop_user }}"
+    group: "{{ desktop_user }}"
+    mode: "0644"
+  become: false
+  when:
+    - bw_vibe_items_raw is defined
+    - bw_vibe_items_raw.rc == 0
+    - (bw_vibe_items_raw.stdout | default('') | length > 0)
+    - "'publicKey' in bw_vibe_items_raw.stdout"
 
 - name: Comprobar existencia de clave SSH de vibe
   ansible.builtin.stat:
@@ -71,22 +95,6 @@ except Exception as e:
   become: false
   when: ssh_key_vibe.stat.exists
 
-- name: Configurar host github-vibe en ~/.ssh/config
-  ansible.builtin.blockinfile:
-    path: "{{ desktop_home }}/.ssh/config"
-    create: true
-    owner: "{{ desktop_user }}"
-    group: "{{ desktop_user }}"
-    mode: "0600"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK (github-vibe)"
-    block: |
-      Host github-vibe
-        HostName github.com
-        User git
-        IdentityFile ~/.ssh/id_github_vibe
-  become: false
-  when: is_daniel_borre | bool
-
 - name: Instalar chezmoi
   ansible.builtin.shell: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "{{ desktop_home }}/.local/bin"
   args:
@@ -99,20 +107,41 @@ except Exception as e:
   register: chezmoi_source_repo
   become: false
 
-- name: Establecer URL del repositorio de dotfiles
-  ansible.builtin.set_fact:
-    chezmoi_repo_url: "{{ 'git@github-vibe:danicpr/dotfiles.git' if (is_daniel_borre | bool) else 'https://github.com/danicpr/dotfiles.git' }}"
-
-- name: Inicializar y aplicar source nuevo de chezmoi
-  ansible.builtin.command: "{{ desktop_home }}/.local/bin/chezmoi init --apply {{ chezmoi_repo_url }}"
+- name: Inicializar y aplicar source nuevo de chezmoi vía HTTPS
+  ansible.builtin.command: "{{ desktop_home }}/.local/bin/chezmoi init --apply --force https://github.com/danicpr/dotfiles.git"
   become: false
   environment:
     HOME: "{{ desktop_home }}"
-    BW_SESSION: "{{ bw_session | default('') }}"
-    GIT_NAME: "{{ git_name | default('') }}"
-    GIT_EMAIL: "{{ git_email | default('') }}"
-  no_log: true
+    BW_SESSION: "{{ bw_session | default(lookup('env', 'BW_SESSION', default=''), true) }}"
+    GIT_NAME: "{{ git_name | default('Daniel Borre') }}"
+    GIT_EMAIL: "{{ git_email | default('dborrecaro@gmail.com') }}"
   when: not chezmoi_source_repo.stat.exists
+
+- name: Comprobar si existe la configuracion de chezmoi
+  ansible.builtin.stat:
+    path: "{{ desktop_home }}/.config/chezmoi/chezmoi.toml"
+  register: chezmoi_config_file
+  become: false
+
+- name: Inicializar configuracion de chezmoi si no existe
+  ansible.builtin.command: "{{ desktop_home }}/.local/bin/chezmoi init --force"
+  become: false
+  environment:
+    HOME: "{{ desktop_home }}"
+    BW_SESSION: "{{ bw_session | default(lookup('env', 'BW_SESSION', default=''), true) }}"
+    GIT_NAME: "{{ git_name | default('Daniel Borre') }}"
+    GIT_EMAIL: "{{ git_email | default('dborrecaro@gmail.com') }}"
+  when: not chezmoi_config_file.stat.exists
+
+- name: Aplicar source existente de chezmoi
+  ansible.builtin.command: "{{ desktop_home }}/.local/bin/chezmoi apply --force"
+  become: false
+  environment:
+    HOME: "{{ desktop_home }}"
+    BW_SESSION: "{{ bw_session | default(lookup('env', 'BW_SESSION', default=''), true) }}"
+    GIT_NAME: "{{ git_name | default('Daniel Borre') }}"
+    GIT_EMAIL: "{{ git_email | default('dborrecaro@gmail.com') }}"
+  when: chezmoi_source_repo.stat.exists
 
 - name: Comprobar remote del source repo de chezmoi
   ansible.builtin.command:
@@ -127,9 +156,11 @@ except Exception as e:
   become: false
   changed_when: false
   failed_when: false
-  when: chezmoi_source_repo.stat.exists
+  when:
+    - is_daniel_borre | bool
+    - ssh_key_vibe.stat.exists
 
-- name: Actualizar remote del source repo de chezmoi a github-vibe si difiere
+- name: Actualizar remote del source repo de chezmoi a github-vibe si la clave SSH existe
   ansible.builtin.command:
     argv:
       - git
@@ -138,20 +169,12 @@ except Exception as e:
       - remote
       - set-url
       - origin
-      - "{{ chezmoi_repo_url }}"
+      - "git@github-vibe:danicpr/dotfiles.git"
   become: false
-  when: chezmoi_source_repo.stat.exists and (chezmoi_remote.stdout | default('') | trim != chezmoi_repo_url)
-
-- name: Aplicar source existente de chezmoi
-  ansible.builtin.command: "{{ desktop_home }}/.local/bin/chezmoi apply --force"
-  become: false
-  environment:
-    HOME: "{{ desktop_home }}"
-    BW_SESSION: "{{ bw_session | default('') }}"
-    GIT_NAME: "{{ git_name | default('') }}"
-    GIT_EMAIL: "{{ git_email | default('') }}"
-  no_log: true
-  when: chezmoi_source_repo.stat.exists
+  when:
+    - is_daniel_borre | bool
+    - ssh_key_vibe.stat.exists
+    - (chezmoi_remote.stdout | default('') | trim != 'git@github-vibe:danicpr/dotfiles.git')
 
 - name: Comprobar si el directorio ansible es un repositorio git
   ansible.builtin.stat:
@@ -159,7 +182,7 @@ except Exception as e:
   register: ansible_git_repo
   become: false
 
-- name: Configurar remote de ansible a github-vibe
+- name: Configurar remote de ansible a github-vibe si la clave SSH existe
   ansible.builtin.command:
     argv:
       - git
@@ -172,4 +195,5 @@ except Exception as e:
   become: false
   when:
     - is_daniel_borre | bool
+    - ssh_key_vibe.stat.exists
     - ansible_git_repo.stat.exists

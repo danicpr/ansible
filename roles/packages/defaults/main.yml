@@ -57,7 +57,7 @@ pacman_packages:
 aur_packages: []
 
 flatpak_packages:
-  - org.bluesabre.MenuLibre
+  - com.github.donadigo.appeditor
   - org.gnome.gitlab.somas.Apostrophe
   - com.github.tchx84.Flatseal
   - com.stremio.Stremio

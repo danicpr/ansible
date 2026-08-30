@@ -4,10 +4,6 @@
   vars:
     desktop_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
     desktop_home: "{{ lookup('env', 'HOME') }}"
-    enable_gnome: "{{ enable_gnome | default(false) | bool }}"
-    enable_intel: "{{ enable_intel | default(false) | bool }}"
-    enable_bitwarden: "{{ enable_bitwarden | default(false) | bool }}"
-    bw_password: "{{ bw_password | default('') }}"
   vars_prompt:
     - name: git_name
       prompt: "Nombre para gitconfig"
@@ -32,7 +28,7 @@
       command: bw --version
       become: false
       changed_when: false
-      when: enable_bitwarden | bool
+      when: enable_bitwarden | default(false) | bool
       tags: [always, bitwarden, secrets]
 
     - name: Comprobar autenticación de Bitwarden
@@ -40,36 +36,40 @@
       become: false
       register: bw_status
       changed_when: false
-      no_log: true
       failed_when: bw_status.rc != 0 or ((bw_status.stdout | from_json).status | default('unauthenticated')) == 'unauthenticated'
-      when: enable_bitwarden | bool
+      when: enable_bitwarden | default(false) | bool
       tags: [always, bitwarden, secrets]
 
     - name: Desbloquear vault y obtener sesión de Bitwarden
       command: bw unlock --passwordenv BW_PASSWORD --raw
       environment:
-        BW_PASSWORD: "{{ bw_password }}"
+        BW_PASSWORD: "{{ bw_password | default('') }}"
       register: bw_unlock
-      no_log: true
       become: false
-      when: enable_bitwarden | bool and (bw_password | length > 0)
+      when:
+        - enable_bitwarden | default(false) | bool
+        - (bw_session | default(lookup('env', 'BW_SESSION', default=''), true) | length == 0)
+        - (bw_password | default('') | length > 0)
       tags: [always, bitwarden, secrets]
 
     - name: Guardar BW_SESSION como fact
       set_fact:
-        bw_session: "{{ bw_unlock.stdout | default(lookup('env', 'BW_SESSION'), true) }}"
-      no_log: true
-      when: enable_bitwarden | bool
+        bw_session: "{{ bw_session if (bw_session is defined and bw_session | length > 0) else (bw_unlock.stdout if (bw_unlock is defined and bw_unlock.stdout is defined and bw_unlock.stdout | length > 0) else lookup('env', 'BW_SESSION', default='')) }}"
+      when: enable_bitwarden | default(false) | bool
       tags: [always, bitwarden, secrets]
 
-    - name: Sincronizar vault
+    - name: Sincronizar vault (opcional)
       command: bw sync
       become: false
       environment:
-        BW_SESSION: "{{ bw_session | default('') }}"
+        BW_SESSION: "{{ bw_session }}"
+        PATH: "{{ desktop_home }}/.local/bin:{{ desktop_home }}/.bun/bin:{{ desktop_home }}/.cargo/bin:{{ ansible_env.PATH }}"
       changed_when: false
-      no_log: true
-      when: enable_bitwarden | bool and (bw_session | default('') | length > 0)
+      failed_when: false
+      when:
+        - enable_bitwarden | default(false) | bool
+        - bw_session is defined
+        - bw_session | length > 0
       tags: [always, bitwarden, secrets]
 
   tasks:
@@ -122,7 +122,7 @@
         - name: Aplicar role extensions (Solo GNOME)
           include_role:
             name: extensions
-          when: enable_gnome | bool
+          when: enable_gnome | default(false) | bool
           tags: [gnome, extensions]
 
         - name: Aplicar role zen
@@ -133,6 +133,8 @@
         - name: Aplicar role chezmoi
           include_role:
             name: chezmoi
+            apply:
+              tags: [chezmoi, dotfiles, base, bitwarden, secrets]
           tags: [chezmoi, dotfiles, base, bitwarden, secrets]
       always:
         - name: Remove temporary pacman sudoers
