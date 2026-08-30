@@ -51,6 +51,7 @@ pacman_packages:
   - onlyoffice-bin
   - gimp
   - qbittorrent
+  - loupe
   - celluloid
   - vesktop
 aur_packages: []

@@ -1,17 +1,9 @@
 ---
-- name: Verificar si el tema GTK ya está instalado
-  stat:
-    path: "{{ desktop_home }}/.themes/MacTahoe-Dark"
-  register: theme_installed
-  become: false
+# ==============================================================================
+# 1. ICONOS Y CURSORES MACTAHOE (Agnóstico - se instala en cualquier entorno/WM)
+# ==============================================================================
 
-- name: Verificar si el tema libadwaita ya está instalado
-  stat:
-    path: "{{ desktop_home }}/.config/gtk-4.0/gtk.css"
-  register: libadwaita_installed
-  become: false
-
-- name: Verificar si los iconos ya están instalados
+- name: Verificar si los iconos MacTahoe ya están instalados
   stat:
     path: "{{ desktop_home }}/.local/share/icons/MacTahoe-dark"
   register: icons_installed
@@ -29,27 +21,6 @@
   register: dark_cursor_installed
   become: false
 
-- name: Clonar MacTahoe-gtk-theme
-  become: false
-  git:
-    repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
-    dest: /tmp/MacTahoe-gtk-theme
-    depth: 1
-  when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
-- name: Instalar tema GTK (dark, con bordes)
-  become: false
-  command: ./install.sh -c dark -b
-  args:
-    chdir: /tmp/MacTahoe-gtk-theme
-  when: not theme_installed.stat.exists
-
-- name: Instalar tema GTK libadwaita (dark, con bordes)
-  become: false
-  command: ./install.sh -l -b -c dark
-  args:
-    chdir: /tmp/MacTahoe-gtk-theme
-  when: not libadwaita_installed.stat.exists
-
 - name: Clonar MacTahoe-icon-theme (iconos + cursores)
   become: false
   git:
@@ -58,41 +29,111 @@
     depth: 1
   when: not icons_installed.stat.exists or not cursor_installed.stat.exists or not dark_cursor_installed.stat.exists
 
-- name: Instalar iconos
+- name: Instalar iconos MacTahoe
   become: false
   command: ./install.sh -b
   args:
     chdir: /tmp/MacTahoe-icon-theme
   when: not icons_installed.stat.exists
 
-- name: Instalar cursores
+- name: Instalar cursores MacTahoe
   become: false
   command: ./install.sh
   args:
     chdir: /tmp/MacTahoe-icon-theme/cursors
   when: not cursor_installed.stat.exists or not dark_cursor_installed.stat.exists
 
-- name: Aplicar tweak de GDM theme (dark)
-  become: true
-  command: ./tweaks.sh -g -c Dark
-  args:
-    chdir: /tmp/MacTahoe-gtk-theme
-  when: not theme_installed.stat.exists
-
-- name: Permitir tema GTK en apps Flatpak (GTK3)
-  become: true
-  command: flatpak override --filesystem=xdg-config/gtk-3.0
-  changed_when: false
-
-- name: Permitir tema GTK en apps Flatpak (GTK4)
-  become: true
-  command: flatpak override --filesystem=xdg-config/gtk-4.0
-  changed_when: false
-
-- name: Aplicar tweak de Flatpak (dark)
+- name: Actualizar caché de iconos
   become: false
-  command: ./tweaks.sh -F -c dark
-  args:
-    chdir: /tmp/MacTahoe-gtk-theme
+  command: gtk-update-icon-cache -f {{ desktop_home }}/.local/share/icons/{{ item }}
+  loop:
+    - MacTahoe
+    - MacTahoe-dark
   changed_when: false
-  when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
+  failed_when: false
+  when: not icons_installed.stat.exists
+
+- name: Permitir acceso a iconos en apps Flatpak
+  become: true
+  command: flatpak override --filesystem=xdg-data/icons:ro
+  changed_when: false
+
+- name: Limpiar directorio temporal de MacTahoe-icon-theme
+  file:
+    path: /tmp/MacTahoe-icon-theme
+    state: absent
+  become: false
+  when: not icons_installed.stat.exists or not cursor_installed.stat.exists or not dark_cursor_installed.stat.exists
+
+# ==============================================================================
+# 2. TEMA GTK, LIBADWAITA Y GDM (Solo GNOME)
+# ==============================================================================
+
+- name: Bloque de personalización de tema para GNOME
+  when: enable_gnome | default(false) | bool
+  block:
+    - name: Verificar si el tema GTK ya está instalado
+      stat:
+        path: "{{ desktop_home }}/.themes/MacTahoe-Dark"
+      register: theme_installed
+      become: false
+
+    - name: Verificar si el tema libadwaita ya está instalado
+      stat:
+        path: "{{ desktop_home }}/.config/gtk-4.0/gtk.css"
+      register: libadwaita_installed
+      become: false
+
+    - name: Clonar MacTahoe-gtk-theme
+      become: false
+      git:
+        repo: https://github.com/vinceliuice/MacTahoe-gtk-theme.git
+        dest: /tmp/MacTahoe-gtk-theme
+        depth: 1
+      when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
+
+    - name: Instalar tema GTK (dark, con bordes)
+      become: false
+      command: ./install.sh -c dark -b
+      args:
+        chdir: /tmp/MacTahoe-gtk-theme
+      when: not theme_installed.stat.exists
+
+    - name: Instalar tema GTK libadwaita (dark, con bordes)
+      become: false
+      command: ./install.sh -l -b -c dark
+      args:
+        chdir: /tmp/MacTahoe-gtk-theme
+      when: not libadwaita_installed.stat.exists
+
+    - name: Aplicar tweak de GDM theme (dark)
+      become: true
+      command: ./tweaks.sh -g -c Dark
+      args:
+        chdir: /tmp/MacTahoe-gtk-theme
+      when: not theme_installed.stat.exists
+
+    - name: Permitir tema GTK en apps Flatpak (GTK3)
+      become: true
+      command: flatpak override --filesystem=xdg-config/gtk-3.0
+      changed_when: false
+
+    - name: Permitir tema GTK en apps Flatpak (GTK4)
+      become: true
+      command: flatpak override --filesystem=xdg-config/gtk-4.0
+      changed_when: false
+
+    - name: Aplicar tweak de Flatpak (dark)
+      become: false
+      command: ./tweaks.sh -F -c dark
+      args:
+        chdir: /tmp/MacTahoe-gtk-theme
+      changed_when: false
+      when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists
+
+    - name: Limpiar directorio temporal de MacTahoe-gtk-theme
+      file:
+        path: /tmp/MacTahoe-gtk-theme
+        state: absent
+      become: false
+      when: not theme_installed.stat.exists or not libadwaita_installed.stat.exists

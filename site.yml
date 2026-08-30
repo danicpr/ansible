@@ -114,11 +114,10 @@
             name: fonts
           tags: [fonts, base]
 
-        - name: Aplicar role theme (Solo GNOME)
+        - name: Aplicar role theme
           include_role:
             name: theme
-          when: enable_gnome | bool
-          tags: [gnome, theme]
+          tags: [theme, base]
 
         - name: Aplicar role extensions (Solo GNOME)
           include_role:
