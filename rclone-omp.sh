@@ -62,6 +62,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=true
+ExecStartPre=/usr/bin/mkdir -p %h/.omp/agent/sessions
 ExecStart=/usr/bin/rclone sync %h/.omp/agent/sessions gdrive:omp-backup/sessions --fast-list --transfers 4 --quiet
 ExecStop=/usr/bin/rclone sync %h/.omp/agent/sessions gdrive:omp-backup/sessions --fast-list --transfers 4 --quiet
 TimeoutStopSec=30
